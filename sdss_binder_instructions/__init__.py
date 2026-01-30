@@ -4,7 +4,7 @@ import os
 
 def setup():
 	def mappath(path):
-		return '/notebooks/introduction.ipynb'
+		return 'introduction.ipynb'
 
 	return {
 		'mappath': mappath,
