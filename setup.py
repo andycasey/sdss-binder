@@ -13,7 +13,7 @@ setuptools.setup(
 	long_description_content_type='text/markdown',
 	packages=setuptools.find_packages(),
 	package_data={
-		'sdss-binder-instructions': ['icon.png'],
+		'sdss-binder-instructions': ['icon.ico'],
 	},
 	entry_points={
 		'jupyter_serverproxy_servers': [

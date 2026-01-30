@@ -25,6 +25,6 @@ def setup():
 		'request_headers_override': { 'Authorization': 'Basic ' + base64.b64encode(b' :' + token.encode()).decode() },
 		'launcher_entry': {
 			'title': 'Using SDSS data in BinderHub',
-			'icon_path': os.path.join(os.path.dirname(os.path.abspath(__file__)), 'icon.png')
+			'icon_path': os.path.join(os.path.dirname(os.path.abspath(__file__)), 'icon.ico')
 		},
 	}
