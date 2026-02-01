@@ -345,7 +345,7 @@ def _(
     _filename = output_filename.value or "filtered_exposures"
     _format = output_format.value
 
-    _filename = f"../../home/{_filename}"
+    _filename = f"home/{_filename}"
 
     from tqdm import tqdm
     try:
@@ -355,12 +355,7 @@ def _(
 
             _export_data = {}
             for col in tqdm(_columns_to_export, desc="Collecting"):
-                _data = _fp[col][:]
-                # Index into the data
-                if len(_data.shape) == 1:
-                    _export_data[col] = _data[match_indices]
-                else:
-                    _export_data[col] = _data[match_indices]
+                _export_data[col] = _fp[col][match_indices]
 
         # Export based on format
         if _format == "h5":
