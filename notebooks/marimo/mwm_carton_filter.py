@@ -396,6 +396,106 @@ def _(
 
 
 @app.cell(hide_code=True)
+def _(apply_button, mo, n_matched):
+    # Spectra export section
+    mo.stop(not apply_button.value or n_matched == 0)
+
+    mo.md("""
+    ---
+    ## Export Filtered Spectra
+
+    Export flux and inverse variance (ivar) spectra for the filtered exposures.
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo, n_matched):
+    mo.stop(n_matched == 0)
+
+    spectra_filename = mo.ui.text(
+        value="filtered_spectra",
+        label="Output filename (without extension):",
+        full_width=False
+    )
+
+    spectra_filename
+    return (spectra_filename,)
+
+
+@app.cell(hide_code=True)
+def _(mo, n_matched):
+    export_spectra_button = mo.ui.run_button(
+        label="Export spectra (HDF5)",
+        disabled=n_matched == 0
+    )
+    export_spectra_button
+    return (export_spectra_button,)
+
+
+@app.cell(hide_code=True)
+def _(
+    export_spectra_button,
+    h5,
+    match_indices,
+    mo,
+    n_matched,
+    spectra_filename,
+):
+    from pathlib import Path as _Path
+    mo.stop(not export_spectra_button.value or n_matched == 0)
+
+    _spectra_filename = spectra_filename.value or "filtered_spectra"
+    _spectra_filename = f"home/{_spectra_filename}"
+
+    # Define the spectra file paths
+    _DATA_DIR = _Path("data/work/mwm/0.2.0")
+    _flux_file = _DATA_DIR / "arMADGICS_out_x_starLines_v0.h5"
+    _ivar_file = _DATA_DIR / "arMADGICS_out_x_starLines_err_v0.h5"
+
+    from tqdm import tqdm as _tqdm
+    try:
+        _exported_files = []
+
+        # Export flux file if it exists
+        if _flux_file.exists():
+            _flux_output = f"{_spectra_filename}_flux.h5"
+            with h5.File(_flux_file, "r", locking=False) as _flux_fp:
+                _flux_datasets = list(_flux_fp.keys())
+
+                with h5.File(_flux_output, "w") as _out_fp:
+                    for _dset in _tqdm(_flux_datasets, desc="Exporting flux"):
+                        _data = _flux_fp[_dset][match_indices]
+                        _out_fp.create_dataset(_dset, data=_data)
+
+            _exported_files.append(f"`{_flux_output}` (flux)")
+        else:
+            _exported_files.append(f"⚠️ Flux file not found: `{_flux_file}`")
+
+        # Export ivar file if it exists
+        if _ivar_file.exists():
+            _ivar_output = f"{_spectra_filename}_ivar.h5"
+            with h5.File(_ivar_file, "r", locking=False) as _ivar_fp:
+                _ivar_datasets = list(_ivar_fp.keys())
+
+                with h5.File(_ivar_output, "w") as _out_fp:
+                    for _dset in _tqdm(_ivar_datasets, desc="Exporting ivar"):
+                        _data = _ivar_fp[_dset][match_indices]
+                        _out_fp.create_dataset(_dset, data=_data)
+
+            _exported_files.append(f"`{_ivar_output}` (ivar)")
+        else:
+            _exported_files.append(f"⚠️ Ivar file not found: `{_ivar_file}`")
+
+        _spectra_export_result = f"✅ **Success!** Exported {n_matched:,} spectra to:\n\n" + "\n\n".join([f"- {f}" for f in _exported_files])
+    except Exception as _e:
+        _spectra_export_result = f"❌ **Error:** {str(_e)}"
+
+    mo.md(_spectra_export_result)
+    return
+
+
+@app.cell(hide_code=True)
 def _(mo):
     mo.md("""
     ---
