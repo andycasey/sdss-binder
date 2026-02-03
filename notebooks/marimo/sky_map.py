@@ -359,10 +359,10 @@ def _(EXPOSURES_FILE, h5, mo, np):
     # Load unique sources from exposures file
     mo.stop(not EXPOSURES_FILE.exists(), mo.md(f"❌ **Error:** Exposures file not found at `{EXPOSURES_FILE}`"))
     
-    with h5.File(EXPOSURES_FILE, "r", locking=False) as _fp:
-        sdss_id_all = _fp["sdss_id"][:]
-        _ra_all = _fp["gaia_ra"][:]
-        _dec_all = _fp["gaia_dec"][:]
+    with h5.File(EXPOSURES_FILE, "r", locking=False) as _h5file:
+        sdss_id_all = _h5file["sdss_id"][:]
+        _ra_all = _h5file["gaia_ra"][:]
+        _dec_all = _h5file["gaia_dec"][:]
     
     _unique_sdss_ids, _unique_indices = np.unique(sdss_id_all, return_index=True)
     
@@ -436,36 +436,36 @@ def _(
     # Load source details when selected
     mo.stop(selected_sdss_id is None)
     
-    _source_indices = np.where(sdss_id_all == selected_sdss_id)[0]
+    _idx = np.where(sdss_id_all == selected_sdss_id)[0]
     
-    if len(_source_indices) == 0:
+    if len(_idx) == 0:
         mo.stop(True, mo.md(f"⚠️ **SDSS ID {selected_sdss_id} not found in the dataset.**"))
     
-    with h5.File(EXPOSURES_FILE, "r", locking=False) as _fp:
+    with h5.File(EXPOSURES_FILE, "r", locking=False) as _src_file:
         source_data = {}
-        for _field in SOURCE_IDENTIFIER_FIELDS:
-            if _field in _fp:
-                _val = _fp[_field][_source_indices[0]]
-                if isinstance(_val, (bytes, np.bytes_)):
-                    _val = _val.decode('utf-8').strip()
-                source_data[_field] = _val
+        for _f in SOURCE_IDENTIFIER_FIELDS:
+            if _f in _src_file:
+                _v = _src_file[_f][_idx[0]]
+                if isinstance(_v, (bytes, np.bytes_)):
+                    _v = _v.decode('utf-8').strip()
+                source_data[_f] = _v
         
-        for _field in SOURCE_DISPLAY_FIELDS:
-            if _field in _fp:
-                _val = _fp[_field][_source_indices[0]]
-                if isinstance(_val, (np.floating, float)) and not np.isfinite(_val):
-                    _val = None
-                source_data[_field] = _val
+        for _f in SOURCE_DISPLAY_FIELDS:
+            if _f in _src_file:
+                _v = _src_file[_f][_idx[0]]
+                if isinstance(_v, (np.floating, float)) and not np.isfinite(_v):
+                    _v = None
+                source_data[_f] = _v
         
         exposure_data = {}
-        for _field in ['mjd', 'snr', 'v_rad', 'e_v_rad', 'observatory', 'exposure']:
-            if _field in _fp:
-                _vals = _fp[_field][_source_indices]
-                if len(_vals) > 0 and isinstance(_vals[0], bytes):
-                    _vals = [v.decode('utf-8') if isinstance(v, bytes) else str(v) for v in _vals]
-                exposure_data[_field] = _vals
+        for _f in ['mjd', 'snr', 'v_rad', 'e_v_rad', 'observatory', 'exposure']:
+            if _f in _src_file:
+                _vs = _src_file[_f][_idx]
+                if len(_vs) > 0 and isinstance(_vs[0], bytes):
+                    _vs = [x.decode('utf-8') if isinstance(x, bytes) else str(x) for x in _vs]
+                exposure_data[_f] = _vs
     
-    n_exposures = len(_source_indices)
+    n_exposures = len(_idx)
     return exposure_data, n_exposures, source_data
 
 
