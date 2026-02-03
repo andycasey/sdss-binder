@@ -13,5 +13,3 @@ matplotdrip
 sdss-semaphore
 pyarrow
 tqdm
-ipyaladin
-astropy
