@@ -34,115 +34,9 @@ def _(display_note, mo):
 
 
 @app.cell(hide_code=True)
-def _(mo, sources_json):
-    # Aladin Lite sky map viewer
-    _aladin_html = f"""
-    <div id="aladin-lite-div" style="width: 100%; height: 650px; border-radius: 8px; overflow: hidden;"></div>
-    
-    <link rel="stylesheet" href="https://aladin.cds.unistra.fr/AladinLite/api/v3/latest/aladin.min.css" />
-    <script type="text/javascript" src="https://aladin.cds.unistra.fr/AladinLite/api/v3/latest/aladin.js" charset="utf-8"></script>
-    
-    <script type="text/javascript">
-    (function() {{
-        A.init.then(() => {{
-            let aladin = A.aladin('#aladin-lite-div', {{
-                survey: 'P/2MASS/color',
-                projection: 'MOL',
-                cooFrame: 'galactic',
-                fov: 360,
-                showCooGrid: true,
-                showCooGridControl: true,
-                showSettingsControl: true,
-                showShareControl: false,
-                showFullscreenControl: true,
-                showLayersControl: true,
-                showGotoControl: true,
-                showZoomControl: true,
-                showFrame: true
-            }});
-            
-            window.sdssAladin = aladin;
-            let sourceData = {sources_json};
-            
-            window.sdssSourceLookup = {{}};
-            sourceData.forEach(s => {{
-                window.sdssSourceLookup[s.sdss_id] = {{ra: s.ra, dec: s.dec}};
-            }});
-            
-            let catalog = A.catalog({{
-                name: 'SDSS-V Sources',
-                sourceSize: 8,
-                color: '#ff6b6b',
-                shape: 'circle',
-                onClick: 'showTable'
-            }});
-            
-            let sources = sourceData.map(s => {{
-                return A.source(s.ra, s.dec, {{
-                    sdss_id: s.sdss_id,
-                    name: 'SDSS ' + s.sdss_id
-                }});
-            }});
-            
-            catalog.addSources(sources);
-            aladin.addCatalog(catalog);
-            
-            window.sdssClickUpdating = false;
-            
-            aladin.on('objectClicked', function(object) {{
-                if (object && object.data && object.data.sdss_id) {{
-                    let sdssId = object.data.sdss_id;
-                    window.sdssClickUpdating = true;
-                    document.querySelectorAll('input[type="text"]').forEach(input => {{
-                        if (input.closest('.marimo-ui-text')) {{
-                            input.value = String(sdssId);
-                            input.dispatchEvent(new Event('input', {{ bubbles: true }}));
-                            input.dispatchEvent(new Event('change', {{ bubbles: true }}));
-                        }}
-                    }});
-                    setTimeout(() => {{ window.sdssClickUpdating = false; }}, 100);
-                }}
-            }});
-            
-            function setupInputWatcher() {{
-                document.querySelectorAll('input[type="text"]').forEach(input => {{
-                    if (input.closest('.marimo-ui-text') && !input.dataset.sdssWatching) {{
-                        input.dataset.sdssWatching = 'true';
-                        input.addEventListener('change', function(e) {{
-                            if (window.sdssClickUpdating) return;
-                            let sdssId = parseInt(input.value.trim());
-                            if (!isNaN(sdssId) && window.sdssSourceLookup[sdssId]) {{
-                                let coords = window.sdssSourceLookup[sdssId];
-                                window.sdssAladin.gotoRaDec(coords.ra, coords.dec);
-                                window.sdssAladin.setFoV(2);
-                            }}
-                        }});
-                        input.addEventListener('keydown', function(e) {{
-                            if (e.key === 'Enter') {{
-                                if (window.sdssClickUpdating) return;
-                                let sdssId = parseInt(input.value.trim());
-                                if (!isNaN(sdssId) && window.sdssSourceLookup[sdssId]) {{
-                                    let coords = window.sdssSourceLookup[sdssId];
-                                    window.sdssAladin.gotoRaDec(coords.ra, coords.dec);
-                                    window.sdssAladin.setFoV(2);
-                                }}
-                            }}
-                        }});
-                    }}
-                }});
-            }}
-            
-            setupInputWatcher();
-            new MutationObserver(setupInputWatcher).observe(document.body, {{
-                childList: true, subtree: true
-            }});
-            
-            aladin.gotoRaDec(266.417, -29.008);
-        }});
-    }})();
-    </script>
-    """
-    return mo.Html(_aladin_html)
+def _(aladin_widget, mo):
+    # Display the Aladin widget
+    return mo.ui.anywidget(aladin_widget)
 
 
 @app.cell(hide_code=True)
@@ -150,7 +44,7 @@ def _(mo, selected_source_input):
     return mo.hstack([
         mo.md("**Enter SDSS ID:**"),
         selected_source_input,
-        mo.md("_(press Enter to pan & zoom, or click a point on the map)_")
+        mo.md("_(press Enter to load source details)_")
     ], justify="start", gap=1)
 
 
@@ -161,7 +55,7 @@ def _(mo, n_sources):
     if n_sources > _max_pts:
         return mo.md(f"""
         > **Note:** The map shows a random subset of {_max_pts:,} sources for browser performance. 
-        > If you enter an SDSS ID that isn't in the displayed subset, the map won't pan to it, 
+        > If you enter an SDSS ID that isn't in the displayed subset, it won't appear on the map, 
         > but the details will still load below.
         """)
 
@@ -170,7 +64,7 @@ def _(mo, n_sources):
 def _(mo, selected_sdss_id):
     # Prompt to select a source
     if selected_sdss_id is None:
-        return mo.md("_Click on a source in the map above or enter an SDSS ID to see details._")
+        return mo.md("_Enter an SDSS ID above to see source details._")
 
 
 @app.cell(hide_code=True)
@@ -289,7 +183,6 @@ def _(mo):
         | **Zoom** | Mouse scroll wheel |
         | **Select source** | Click on a point |
         | **Toggle layers** | Layers control (top right) |
-        | **Change survey** | Survey selector (bottom) |
         | **Full screen** | Fullscreen button |
         """
     )
@@ -306,7 +199,11 @@ def _():
     import numpy as np
     import os
     from pathlib import Path
-    return Path, h5, mo, np, os
+    from ipyaladin import Aladin
+    from astropy.table import Table
+    from astropy.coordinates import SkyCoord, Angle
+    import astropy.units as u
+    return Aladin, Angle, Path, SkyCoord, Table, h5, mo, np, os, u
 
 
 @app.cell(hide_code=True)
@@ -371,29 +268,60 @@ def _(EXPOSURES_FILE, h5, mo, np):
 
 
 @app.cell(hide_code=True)
-def _(dec, n_sources, np, ra, sdss_id):
+def _(Table, dec, n_sources, np, ra, sdss_id, u):
     # Prepare display data with subsampling if needed
     _MAX_POINTS = 100000
     
     if n_sources > _MAX_POINTS:
         _rng = np.random.default_rng(42)
         _sample_idx = _rng.choice(n_sources, _MAX_POINTS, replace=False)
-        _display_ra = ra[_sample_idx]
-        _display_dec = dec[_sample_idx]
-        _display_sdss_id = sdss_id[_sample_idx]
+        display_ra = ra[_sample_idx]
+        display_dec = dec[_sample_idx]
+        display_sdss_id = sdss_id[_sample_idx]
         display_note = f"Showing {_MAX_POINTS:,} of {n_sources:,} sources (random sample)"
     else:
-        _display_ra = ra
-        _display_dec = dec
-        _display_sdss_id = sdss_id
+        display_ra = ra
+        display_dec = dec
+        display_sdss_id = sdss_id
         display_note = f"Showing all {n_sources:,} sources"
     
-    # Create JSON for JavaScript
-    sources_json = "[\n" + ",\n".join(
-        f'  {{"ra": {_display_ra[i]:.6f}, "dec": {_display_dec[i]:.6f}, "sdss_id": {_display_sdss_id[i]}}}'
-        for i in range(len(_display_ra))
-    ) + "\n]"
-    return display_note, sources_json
+    # Create astropy table for ipyaladin
+    catalog_table = Table({
+        'ra': display_ra * u.deg,
+        'dec': display_dec * u.deg,
+        'sdss_id': display_sdss_id,
+    })
+    
+    return catalog_table, display_note
+
+
+@app.cell(hide_code=True)
+def _(Aladin, Angle, catalog_table):
+    # Create ipyaladin widget
+    aladin_widget = Aladin(
+        fov=Angle(180, "deg"),
+        target="0 0 Galactic",
+        survey="P/2MASS/color",
+        coo_frame="Galactic",
+        projection="MOL",
+        show_coo_grid=True,
+        show_fullscreen_control=True,
+        show_layers_control=True,
+        show_zoom_control=True,
+        show_settings_control=True,
+        height=600,
+    )
+    
+    # Add the catalog
+    aladin_widget.add_table(
+        catalog_table,
+        name="SDSS-V Sources",
+        color="#ff6b6b",
+        source_size=8,
+        shape="circle",
+    )
+    
+    return (aladin_widget,)
 
 
 @app.cell(hide_code=True)
@@ -404,7 +332,7 @@ def _(mo):
 
 
 @app.cell(hide_code=True)
-def _(mo, selected_source_input):
+def _(selected_source_input):
     # Parse selected SDSS ID from input
     selected_sdss_id = None
     if selected_source_input.value:
