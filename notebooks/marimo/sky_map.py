@@ -4,11 +4,9 @@ __generated_with = "0.10.0"
 app = marimo.App(width="full", app_title="SDSS-V Sky Map")
 
 
-@app.cell(hide_code=True)
-def _():
-    import marimo as mo
-    return (mo,)
-
+# =============================================================================
+# UI CELLS (displayed in order)
+# =============================================================================
 
 @app.cell(hide_code=True)
 def _(mo):
@@ -27,132 +25,21 @@ def _(mo):
 
 
 @app.cell(hide_code=True)
-def _():
-    import h5py as h5
-    import numpy as np
-    import os
-    from pathlib import Path
-    return Path, h5, np, os
+def _(mo, n_sources, n_total_exposures):
+    mo.md(f"**Loaded:** {n_sources:,} unique sources from {n_total_exposures:,} total exposures")
+    return
 
 
 @app.cell(hide_code=True)
-def _(Path, os):
-    # Configuration - modify DATA_DIR if needed
-    DATA_DIR = Path(os.environ.get("DATA_DIR", os.path.expanduser("~/../sdssv/ceph/work/scifest/0.2.0")))
-    EXPOSURES_FILE = DATA_DIR / "exposures.h5"
-    return DATA_DIR, EXPOSURES_FILE
-
-
-@app.cell(hide_code=True)
-def _():
-    # Field name definitions for source data
-    SOURCE_IDENTIFIER_FIELDS = (
-        "sdss_id", "catalogid", "gaia_dr3_source", "tic_v8", "twomass_designation",
-    )
-    
-    SOURCE_DISPLAY_FIELDS = (
-        "gaia_ra", "gaia_dec", "gaia_parallax", "gaia_parallax_error",
-        "gaia_pmra", "gaia_pmra_error", "gaia_pmdec", "gaia_pmdec_error",
-        "gaia_phot_g_mean_mag", "gaia_phot_bp_mean_mag", "gaia_phot_rp_mean_mag",
-        "gaia_radial_velocity", "gaia_radial_velocity_error",
-        "gaia_teff_gspphot", "gaia_logg_gspphot", "gaia_mh_gspphot",
-        "gaia_distance_gspphot",
-        "twomass_j_m", "twomass_h_m", "twomass_k_m",
-    )
-    return SOURCE_IDENTIFIER_FIELDS, SOURCE_DISPLAY_FIELDS
-
-
-@app.cell(hide_code=True)
-def _(EXPOSURES_FILE, h5, mo, np):
-    # Load unique sources from exposures file
-    mo.stop(not EXPOSURES_FILE.exists(), mo.md(f"❌ **Error:** Exposures file not found at `{EXPOSURES_FILE}`"))
-    
-    with h5.File(EXPOSURES_FILE, "r", locking=False) as fp:
-        # Load the columns we need for the map
-        sdss_id_all = fp["sdss_id"][:]
-        ra_all = fp["gaia_ra"][:]
-        dec_all = fp["gaia_dec"][:]
-    
-    # Get unique sources (first occurrence of each sdss_id)
-    unique_sdss_ids, unique_indices = np.unique(sdss_id_all, return_index=True)
-    
-    sdss_id = sdss_id_all[unique_indices]
-    ra = ra_all[unique_indices]
-    dec = dec_all[unique_indices]
-    
-    # Filter out invalid coordinates
-    valid_mask = np.isfinite(ra) & np.isfinite(dec)
-    sdss_id = sdss_id[valid_mask]
-    ra = ra[valid_mask]
-    dec = dec[valid_mask]
-    
-    # Build lookup: sdss_id -> count of exposures
-    unique_ids, counts = np.unique(sdss_id_all, return_counts=True)
-    exposure_counts = dict(zip(unique_ids, counts))
-    
-    n_sources = len(sdss_id)
-    n_total_exposures = len(sdss_id_all)
-    
-    mo.md(f"""
-    **Loaded:** {n_sources:,} unique sources from {n_total_exposures:,} total exposures
-    """)
-    return (
-        dec, exposure_counts, n_sources, n_total_exposures, 
-        ra, sdss_id, sdss_id_all, unique_sdss_ids
-    )
-
-
-@app.cell(hide_code=True)
-def _(mo, np, ra, dec, sdss_id, n_sources):
-    # Prepare data for display, with subsampling if needed
-    MAX_POINTS = 100000
-    
-    if n_sources > MAX_POINTS:
-        rng = np.random.default_rng(42)
-        sample_idx = rng.choice(n_sources, MAX_POINTS, replace=False)
-        display_ra = ra[sample_idx]
-        display_dec = dec[sample_idx]
-        display_sdss_id = sdss_id[sample_idx]
-        display_note = f"Showing {MAX_POINTS:,} of {n_sources:,} sources (random sample)"
-    else:
-        display_ra = ra
-        display_dec = dec
-        display_sdss_id = sdss_id
-        display_note = f"Showing all {n_sources:,} sources"
-    
-    # Create JSON for JavaScript
-    sources_json = "[\n"
-    for i in range(len(display_ra)):
-        sources_json += f'  {{"ra": {display_ra[i]:.6f}, "dec": {display_dec[i]:.6f}, "sdss_id": {display_sdss_id[i]}}}'
-        if i < len(display_ra) - 1:
-            sources_json += ","
-        sources_json += "\n"
-    sources_json += "]"
-    
+def _(display_note, mo):
     mo.md(f"_{display_note}_")
-    return sources_json, display_note
+    return
 
 
 @app.cell(hide_code=True)
-def _(mo):
-    # State for selected source - using a text input that JS can update
-    selected_source_input = mo.ui.text(
-        value="",
-        label="",
-        full_width=False,
-    )
-    # Hide the input - it's just for JS communication
-    return (selected_source_input,)
-
-
-@app.cell(hide_code=True)
-def _(mo, sources_json, selected_source_input):
-    # Create the Aladin Lite viewer with click handler
-    # Bidirectional: click updates input, input change pans map
-    
-    input_id = selected_source_input._id if hasattr(selected_source_input, '_id') else 'source-selector'
-    
-    aladin_html = f"""
+def _(mo, sources_json):
+    # Aladin Lite sky map viewer
+    _aladin_html = f"""
     <div id="aladin-lite-div" style="width: 100%; height: 650px; border-radius: 8px; overflow: hidden;"></div>
     
     <link rel="stylesheet" href="https://aladin.cds.unistra.fr/AladinLite/api/v3/latest/aladin.min.css" />
@@ -177,12 +64,9 @@ def _(mo, sources_json, selected_source_input):
                 showFrame: true
             }});
             
-            // Store aladin instance globally for input handler
             window.sdssAladin = aladin;
-            
             let sourceData = {sources_json};
             
-            // Build lookup map: sdss_id -> {{ra, dec}}
             window.sdssSourceLookup = {{}};
             sourceData.forEach(s => {{
                 window.sdssSourceLookup[s.sdss_id] = {{ra: s.ra, dec: s.dec}};
@@ -206,16 +90,12 @@ def _(mo, sources_json, selected_source_input):
             catalog.addSources(sources);
             aladin.addCatalog(catalog);
             
-            // Track if we're updating from a click (to avoid feedback loop)
             window.sdssClickUpdating = false;
             
-            // Handle source clicks
             aladin.on('objectClicked', function(object) {{
                 if (object && object.data && object.data.sdss_id) {{
                     let sdssId = object.data.sdss_id;
                     window.sdssClickUpdating = true;
-                    
-                    // Update marimo text input
                     document.querySelectorAll('input[type="text"]').forEach(input => {{
                         if (input.closest('.marimo-ui-text')) {{
                             input.value = String(sdssId);
@@ -223,33 +103,26 @@ def _(mo, sources_json, selected_source_input):
                             input.dispatchEvent(new Event('change', {{ bubbles: true }}));
                         }}
                     }});
-                    
                     setTimeout(() => {{ window.sdssClickUpdating = false; }}, 100);
                 }}
             }});
             
-            // Watch for manual input changes and pan to source
             function setupInputWatcher() {{
                 document.querySelectorAll('input[type="text"]').forEach(input => {{
                     if (input.closest('.marimo-ui-text') && !input.dataset.sdssWatching) {{
                         input.dataset.sdssWatching = 'true';
-                        
                         input.addEventListener('change', function(e) {{
                             if (window.sdssClickUpdating) return;
-                            
                             let sdssId = parseInt(input.value.trim());
                             if (!isNaN(sdssId) && window.sdssSourceLookup[sdssId]) {{
                                 let coords = window.sdssSourceLookup[sdssId];
                                 window.sdssAladin.gotoRaDec(coords.ra, coords.dec);
-                                window.sdssAladin.setFoV(2);  // Zoom to 2 degree FOV
+                                window.sdssAladin.setFoV(2);
                             }}
                         }});
-                        
-                        // Also handle Enter key
                         input.addEventListener('keydown', function(e) {{
                             if (e.key === 'Enter') {{
                                 if (window.sdssClickUpdating) return;
-                                
                                 let sdssId = parseInt(input.value.trim());
                                 if (!isNaN(sdssId) && window.sdssSourceLookup[sdssId]) {{
                                     let coords = window.sdssSourceLookup[sdssId];
@@ -262,7 +135,6 @@ def _(mo, sources_json, selected_source_input):
                 }});
             }}
             
-            // Setup watcher initially and on DOM changes
             setupInputWatcher();
             new MutationObserver(setupInputWatcher).observe(document.body, {{
                 childList: true, subtree: true
@@ -273,14 +145,12 @@ def _(mo, sources_json, selected_source_input):
     }})();
     </script>
     """
-    
-    mo.Html(aladin_html)
+    mo.Html(_aladin_html)
     return
 
 
 @app.cell(hide_code=True)
 def _(mo, selected_source_input):
-    # Show the input for manual entry too
     mo.hstack([
         mo.md("**Enter SDSS ID:**"),
         selected_source_input,
@@ -290,23 +160,8 @@ def _(mo, selected_source_input):
 
 
 @app.cell(hide_code=True)
-def _(mo, selected_source_input):
-    # Determine the selected SDSS ID
-    selected_sdss_id = None
-    if selected_source_input.value:
-        try:
-            selected_sdss_id = int(selected_source_input.value.strip())
-        except (ValueError, AttributeError):
-            pass
-    
-    if selected_sdss_id is None:
-        mo.md("_Click on a source in the map above or enter an SDSS ID to see details._")
-    return (selected_sdss_id,)
-
-
-@app.cell(hide_code=True)
 def _(mo, n_sources):
-    # Note about subsampling
+    # Note about subsampling (only shown if subsampled)
     _max_pts = 100000
     if n_sources > _max_pts:
         mo.md(f"""
@@ -318,83 +173,24 @@ def _(mo, n_sources):
 
 
 @app.cell(hide_code=True)
-def _(
-    EXPOSURES_FILE, SOURCE_DISPLAY_FIELDS, SOURCE_IDENTIFIER_FIELDS,
-    exposure_counts, h5, mo, np, sdss_id_all, selected_sdss_id
-):
-    # Load and display source details when a source is selected
-    mo.stop(selected_sdss_id is None)
-    
-    # Find all indices for this source
-    source_indices = np.where(sdss_id_all == selected_sdss_id)[0]
-    
-    if len(source_indices) == 0:
-        mo.stop(True, mo.md(f"⚠️ **SDSS ID {selected_sdss_id} not found in the dataset.**"))
-    
-    # Load source data from file
-    with h5.File(EXPOSURES_FILE, "r", locking=False) as fp:
-        source_data = {}
-        
-        # Load identifier fields (scalar per source)
-        for field in SOURCE_IDENTIFIER_FIELDS:
-            if field in fp:
-                val = fp[field][source_indices[0]]
-                if isinstance(val, bytes):
-                    val = val.decode('utf-8').strip()
-                elif isinstance(val, np.bytes_):
-                    val = val.decode('utf-8').strip()
-                source_data[field] = val
-        
-        # Load display fields (scalar per source)
-        for field in SOURCE_DISPLAY_FIELDS:
-            if field in fp:
-                val = fp[field][source_indices[0]]
-                if isinstance(val, (np.floating, float)):
-                    if not np.isfinite(val):
-                        val = None
-                source_data[field] = val
-        
-        # Load exposure-level data
-        exposure_data = {}
-        for field in ['mjd', 'snr', 'v_rad', 'e_v_rad', 'observatory', 'exposure']:
-            if field in fp:
-                vals = fp[field][source_indices]
-                if len(vals) > 0 and isinstance(vals[0], bytes):
-                    vals = [v.decode('utf-8') if isinstance(v, bytes) else str(v) for v in vals]
-                exposure_data[field] = vals
-    
-    n_exposures = len(source_indices)
-    return source_data, exposure_data, source_indices, n_exposures
-
-
-@app.cell(hide_code=True)
-def _():
-    # Format helper function (defined once, used by multiple cells)
-    def format_value(val, decimals=4):
-        if val is None:
-            return "—"
-        if isinstance(val, float):
-            if decimals == 0:
-                return f"{val:.0f}"
-            return f"{val:.{decimals}f}"
-        return str(val)
-    return (format_value,)
+def _(mo, selected_sdss_id):
+    # Prompt to select a source
+    if selected_sdss_id is None:
+        mo.md("_Click on a source in the map above or enter an SDSS ID to see details._")
+    return
 
 
 @app.cell(hide_code=True)
 def _(mo, n_exposures, selected_sdss_id, source_data):
-    # Display source summary
+    # Source summary header
     mo.stop(selected_sdss_id is None)
     
     _ra = source_data.get('gaia_ra')
     _dec = source_data.get('gaia_dec')
-    
-    # External links
     _links = []
     if _ra is not None and _dec is not None:
         _links.append(f"[SIMBAD](https://simbad.cds.unistra.fr/simbad/sim-coo?Coord={_ra}+{_dec}&Radius=2&Radius.unit=arcsec)")
         _links.append(f"[VizieR](https://vizier.cds.unistra.fr/viz-bin/VizieR-4?-c={_ra}+{_dec}&-c.rs=2)")
-    
     _links_str = " · ".join(_links) if _links else ""
     
     mo.md(f"""
@@ -469,16 +265,10 @@ def _(exposure_data, mo, np, selected_sdss_id):
     
     import pandas as _pd
     
-    # Build exposure DataFrame
     _exp_df_data = {'#': list(range(1, len(exposure_data.get('mjd', [])) + 1))}
-    
     _field_labels = {
-        'mjd': 'MJD',
-        'observatory': 'Obs',
-        'exposure': 'Exposure',
-        'snr': 'SNR',
-        'v_rad': 'v_rad (km/s)',
-        'e_v_rad': 'σ_v_rad'
+        'mjd': 'MJD', 'observatory': 'Obs', 'exposure': 'Exposure',
+        'snr': 'SNR', 'v_rad': 'v_rad (km/s)', 'e_v_rad': 'σ_v_rad'
     }
     
     for _field, _label in _field_labels.items():
@@ -486,16 +276,13 @@ def _(exposure_data, mo, np, selected_sdss_id):
             _vals = exposure_data[_field]
             if hasattr(_vals, 'tolist'):
                 _vals = _vals.tolist()
-            # Round floats
             if len(_vals) > 0 and isinstance(_vals[0], (float, np.floating)):
                 _vals = [round(v, 2) if np.isfinite(v) else None for v in _vals]
             _exp_df_data[_label] = _vals
     
-    _exp_df = _pd.DataFrame(_exp_df_data)
-    
     mo.vstack([
         mo.md("### Exposures"),
-        mo.ui.table(_exp_df, selection=None, pagination=True, page_size=10)
+        mo.ui.table(_pd.DataFrame(_exp_df_data), selection=None, pagination=True, page_size=10)
     ])
     return
 
@@ -519,6 +306,167 @@ def _(mo):
         """
     )
     return
+
+
+# =============================================================================
+# BACKEND CODE (imports, data loading, helper functions)
+# =============================================================================
+
+@app.cell(hide_code=True)
+def _():
+    import marimo as mo
+    import h5py as h5
+    import numpy as np
+    import os
+    from pathlib import Path
+    return Path, h5, mo, np, os
+
+
+@app.cell(hide_code=True)
+def _(Path, os):
+    # Configuration
+    DATA_DIR = Path(os.environ.get("DATA_DIR", os.path.expanduser("~/../sdssv/ceph/work/scifest/0.2.0")))
+    EXPOSURES_FILE = DATA_DIR / "exposures.h5"
+    
+    SOURCE_IDENTIFIER_FIELDS = (
+        "sdss_id", "catalogid", "gaia_dr3_source", "tic_v8", "twomass_designation",
+    )
+    SOURCE_DISPLAY_FIELDS = (
+        "gaia_ra", "gaia_dec", "gaia_parallax", "gaia_parallax_error",
+        "gaia_pmra", "gaia_pmra_error", "gaia_pmdec", "gaia_pmdec_error",
+        "gaia_phot_g_mean_mag", "gaia_phot_bp_mean_mag", "gaia_phot_rp_mean_mag",
+        "gaia_radial_velocity", "gaia_radial_velocity_error",
+        "gaia_teff_gspphot", "gaia_logg_gspphot", "gaia_mh_gspphot",
+        "gaia_distance_gspphot", "twomass_j_m", "twomass_h_m", "twomass_k_m",
+    )
+    return DATA_DIR, EXPOSURES_FILE, SOURCE_DISPLAY_FIELDS, SOURCE_IDENTIFIER_FIELDS
+
+
+@app.cell(hide_code=True)
+def _():
+    # Helper function for formatting values
+    def format_value(val, decimals=4):
+        if val is None:
+            return "—"
+        if isinstance(val, float):
+            return f"{val:.0f}" if decimals == 0 else f"{val:.{decimals}f}"
+        return str(val)
+    return (format_value,)
+
+
+@app.cell(hide_code=True)
+def _(EXPOSURES_FILE, h5, mo, np):
+    # Load unique sources from exposures file
+    mo.stop(not EXPOSURES_FILE.exists(), mo.md(f"❌ **Error:** Exposures file not found at `{EXPOSURES_FILE}`"))
+    
+    with h5.File(EXPOSURES_FILE, "r", locking=False) as _fp:
+        sdss_id_all = _fp["sdss_id"][:]
+        _ra_all = _fp["gaia_ra"][:]
+        _dec_all = _fp["gaia_dec"][:]
+    
+    _unique_sdss_ids, _unique_indices = np.unique(sdss_id_all, return_index=True)
+    
+    _sdss_id = sdss_id_all[_unique_indices]
+    ra = _ra_all[_unique_indices]
+    dec = _dec_all[_unique_indices]
+    
+    _valid_mask = np.isfinite(ra) & np.isfinite(dec)
+    sdss_id = _sdss_id[_valid_mask]
+    ra = ra[_valid_mask]
+    dec = dec[_valid_mask]
+    
+    _unique_ids, _counts = np.unique(sdss_id_all, return_counts=True)
+    exposure_counts = dict(zip(_unique_ids, _counts))
+    
+    n_sources = len(sdss_id)
+    n_total_exposures = len(sdss_id_all)
+    return dec, exposure_counts, n_sources, n_total_exposures, ra, sdss_id, sdss_id_all
+
+
+@app.cell(hide_code=True)
+def _(dec, n_sources, np, ra, sdss_id):
+    # Prepare display data with subsampling if needed
+    _MAX_POINTS = 100000
+    
+    if n_sources > _MAX_POINTS:
+        _rng = np.random.default_rng(42)
+        _sample_idx = _rng.choice(n_sources, _MAX_POINTS, replace=False)
+        _display_ra = ra[_sample_idx]
+        _display_dec = dec[_sample_idx]
+        _display_sdss_id = sdss_id[_sample_idx]
+        display_note = f"Showing {_MAX_POINTS:,} of {n_sources:,} sources (random sample)"
+    else:
+        _display_ra = ra
+        _display_dec = dec
+        _display_sdss_id = sdss_id
+        display_note = f"Showing all {n_sources:,} sources"
+    
+    # Create JSON for JavaScript
+    sources_json = "[\n" + ",\n".join(
+        f'  {{"ra": {_display_ra[i]:.6f}, "dec": {_display_dec[i]:.6f}, "sdss_id": {_display_sdss_id[i]}}}'
+        for i in range(len(_display_ra))
+    ) + "\n]"
+    return display_note, sources_json
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    # UI state: text input for source selection
+    selected_source_input = mo.ui.text(value="", label="", full_width=False)
+    return (selected_source_input,)
+
+
+@app.cell(hide_code=True)
+def _(mo, selected_source_input):
+    # Parse selected SDSS ID from input
+    selected_sdss_id = None
+    if selected_source_input.value:
+        try:
+            selected_sdss_id = int(selected_source_input.value.strip())
+        except (ValueError, AttributeError):
+            pass
+    return (selected_sdss_id,)
+
+
+@app.cell(hide_code=True)
+def _(
+    EXPOSURES_FILE, SOURCE_DISPLAY_FIELDS, SOURCE_IDENTIFIER_FIELDS,
+    h5, mo, np, sdss_id_all, selected_sdss_id
+):
+    # Load source details when selected
+    mo.stop(selected_sdss_id is None)
+    
+    _source_indices = np.where(sdss_id_all == selected_sdss_id)[0]
+    
+    if len(_source_indices) == 0:
+        mo.stop(True, mo.md(f"⚠️ **SDSS ID {selected_sdss_id} not found in the dataset.**"))
+    
+    with h5.File(EXPOSURES_FILE, "r", locking=False) as _fp:
+        source_data = {}
+        for _field in SOURCE_IDENTIFIER_FIELDS:
+            if _field in _fp:
+                _val = _fp[_field][_source_indices[0]]
+                if isinstance(_val, (bytes, np.bytes_)):
+                    _val = _val.decode('utf-8').strip()
+                source_data[_field] = _val
+        
+        for _field in SOURCE_DISPLAY_FIELDS:
+            if _field in _fp:
+                _val = _fp[_field][_source_indices[0]]
+                if isinstance(_val, (np.floating, float)) and not np.isfinite(_val):
+                    _val = None
+                source_data[_field] = _val
+        
+        exposure_data = {}
+        for _field in ['mjd', 'snr', 'v_rad', 'e_v_rad', 'observatory', 'exposure']:
+            if _field in _fp:
+                _vals = _fp[_field][_source_indices]
+                if len(_vals) > 0 and isinstance(_vals[0], bytes):
+                    _vals = [v.decode('utf-8') if isinstance(v, bytes) else str(v) for v in _vals]
+                exposure_data[_field] = _vals
+    
+    n_exposures = len(_source_indices)
+    return exposure_data, n_exposures, source_data
 
 
 if __name__ == "__main__":
