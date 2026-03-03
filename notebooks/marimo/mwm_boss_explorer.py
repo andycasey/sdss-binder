@@ -91,8 +91,8 @@ def _(mo):
 @app.cell
 def _():
     # LIKELY NEED TO CHANGE THE BELOW PATHS
-    block_path = "/home/jovyan/data/release/dr20/spectro/astra/0.8.1/spectra/block/mwmStarBlock-0.8.1.h5"
-    allstar_path = "/home/jovyan/home/data/mwmAllStar-0.8.1.fits"
+    block_path = "data/release/dr20/spectro/astra/0.8.1/spectra/block/mwmStarBlock-0.8.1.h5"
+    allstar_path = "data/release/dr20/spectro/astra/0.8.1/summary/mwmAllStar-0.8.1.fits.gz"
     block_meta_arr_path = str((base_dir.parent / "static" / "block_meta.npy").resolve())
     return allstar_path, block_meta_arr_path, block_path
 
@@ -971,7 +971,7 @@ def _(mo):
 
 @app.cell(hide_code=True)
 def _(mo, outfilename):
-    outfile = f"/home/jovyan/home/data/{outfilename.value}.h5"
+    outfile = f"home/data/{outfilename.value}.h5"
 
     save_options = ["all uploaded IDs", "subset selected above"]
     save_subset_option = mo.ui.radio(
