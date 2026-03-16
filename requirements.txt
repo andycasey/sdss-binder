@@ -8,13 +8,13 @@ matplotlib
 marimo>=0.20.0
 plotly
 pip
-lvm_tools
+lvm_tools>=0.1.0
 matplotdrip
 sdss-semaphore
 pyarrow
 tqdm
 astropy
 cmasher
-spectracles
+spectracles>=0.6.4
 fitsio
 interpax
