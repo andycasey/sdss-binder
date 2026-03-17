@@ -72,11 +72,9 @@ def _():
 def _(mo):
     mo.md(r"""
     <div style="display: flex; align-items: center; justify-content: center; position: relative; height: 80px; width: 100%;">
-        <!-- Logo left-aligned -->
         <img src="https://www.sdss.org/wp-content/uploads/2022/09/sdss-new-logo-72dpi.png"
              style="height: 72px; position: absolute; right: 0;">
 
-        <!-- Header centered -->
         <h1 style="margin: 0; text-align: center; width: 100%;">MWM DR20 BOSS Explorer</h1>
     </div>
     """)
@@ -560,14 +558,16 @@ def _(
 
 
 @app.cell(hide_code=True)
-def _(filtered_allstar, hrd, mo):
+def _(filtered_allstar, hrd):
     select_mask = hrd.value.get_mask(
         filtered_allstar["x_vals"], filtered_allstar["y_vals"]
     )
     selected_allstar = filtered_allstar[select_mask]
+    return (selected_allstar,)
 
 
-
+@app.cell(hide_code=True)
+def _(mo):
     spec_color = mo.ui.text(value="g_mag - rp_mag", label="color spectra by")
     spec_cmap = mo.ui.text(value="turbo", label="colormap")
     smoothing = mo.ui.checkbox(label="smooth spectra with gaussian filter", value=False)
@@ -593,7 +593,6 @@ def _(filtered_allstar, hrd, mo):
         pan3_yrange,
         pan4_xrange,
         pan4_yrange,
-        selected_allstar,
         smoothing,
         spec_cmap,
         spec_color,
