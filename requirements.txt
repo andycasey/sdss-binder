@@ -18,3 +18,4 @@ cmasher
 spectracles>=0.6.4
 fitsio
 interpax
+pyneb
