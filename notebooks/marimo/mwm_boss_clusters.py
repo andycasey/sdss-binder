@@ -16,6 +16,7 @@ def _():
     from io import StringIO
     from matplotlib.colors import LogNorm, Normalize
     from pathlib import Path
+    import fitsio
 
     base_dir = Path(__file__).resolve().parent
     font_path = str((base_dir.parent / "static" / "GoogleSans-Regular.ttf").resolve())
@@ -64,6 +65,7 @@ def _():
         Normalize,
         Path,
         decode_hdf5_bytes,
+        fitsio,
         gaussian_filter1d,
         h5py,
         mo,
@@ -95,7 +97,7 @@ def _(mo):
 
 
 @app.cell(hide_code=True)
-def _(decode_hdf5_bytes, h5py, mo, pd):
+def _(decode_hdf5_bytes, fitsio, h5py, mo, pd):
     with mo.status.spinner("Loading spectra...") as load_spinner:
 
         with h5py.File("data/sandbox/dr20_boss_clusters.h5", "r") as f:
@@ -115,6 +117,22 @@ def _(decode_hdf5_bytes, h5py, mo, pd):
 
 
         hclu = hclu.sort_values("N_stars_w_BOSS_spectrum", ascending=False).reset_index(drop=True)
+
+
+        load_spinner.update("Grabbing BOSSNet information...")
+
+    
+        bn_path = 'data/release/dr20/spectro/astra/0.8.1/summary/astraAllStarBossNet-0.8.1.fits.gz'
+        bn_cols = ['sdss_id', 'telescope', 'teff', 'e_teff', 'logg', 'e_logg', 'fe_h', 
+                   'e_fe_h', 'result_flags', 'flag_warn', 'flag_bad', 'bn_v_r', 'e_bn_v_r']
+
+        with fitsio.FITS(bn_path) as f:
+        
+            bn = pd.DataFrame(f[1].read(columns=bn_cols))
+
+        allstar_hmem = allstar_hmem.merge(bn, on=["sdss_id", "telescope"], how="inner")
+        del bn
+        
     return allstar_hmem, continuum, flux, foc, hclu, ivar, nmf, wavelength
 
 
@@ -154,10 +172,12 @@ def _(mo):
 
     Available columns are
 
-    `['sdss_id', 'gaia_dr3_source_id', 'ra', 'dec', 'l', 'b', 'plx', 'e_plx', 'pmra', 'e_pmra', 'pmde', 'e_pmde', 'gaia_v_rad', 'gaia_e_v_rad', 'g_mag', 'bp_mag', 'rp_mag', 'j_mag', 'h_mag', 'k_mag', 'w1_mag', 'w2_mag', 'telescope', 'n_good_visits', 'v_rad', 'e_v_rad', 'std_v_rad', 'median_e_v_rad', 'xcsao_teff', 'xcsao_e_teff', 'xcsao_logg', 'xcsao_e_logg', 'xcsao_fe_h', 'xcsao_e_fe_h', 'xcsao_meanrxc', 'snr', 'zwarning_flags', 'nmf_rchi2', 'nmf_flags', 'HR24_cluster_name', 'HR24_mem_prob', 'RUWE']`
+    `['sdss_id', 'gaia_dr3_source_id', 'ra', 'dec', 'l', 'b', 'plx', 'e_plx', 'pmra', 'e_pmra', 'pmde', 'e_pmde', 'gaia_v_rad', 'gaia_e_v_rad', 'g_mag', 'bp_mag', 'rp_mag', 'j_mag', 'h_mag', 'k_mag', 'w1_mag', 'w2_mag', 'telescope', 'n_good_visits', 'v_rad', 'e_v_rad', 'std_v_rad', 'median_e_v_rad', 'xcsao_teff', 'xcsao_e_teff', 'xcsao_logg', 'xcsao_e_logg', 'xcsao_fe_h', 'xcsao_e_fe_h', 'xcsao_meanrxc', 'snr', 'zwarning_flags', 'nmf_rchi2', 'nmf_flags', 'HR24_cluster_name', 'HR24_mem_prob', 'RUWE', 'teff', 'e_teff', 'logg', 'e_logg', 'fe_h', 'e_fe_h', 'result_flags', 'flag_warn', 'flag_bad', 'bn_v_r', 'e_bn_v_r']`
 
 
     `['HR24_cluster_name', 'HR24_mem_prob', 'RUWE']` are taken from the [Hunt & Reffert (2024) catalog](https://ui.adsabs.harvard.edu/abs/2024yCat..36860042H/abstract).
+
+    `['teff', 'e_teff', 'logg', 'e_logg', 'fe_h', 'e_fe_h', 'result_flags', 'flag_warn', 'flag_bad', 'bn_v_r', 'e_bn_v_r']` come from `astraAllStarBossNet-0.8.1.fits`.
 
     All other columns come from `mwmAllStar-0.8.1.fits`.
 
@@ -731,7 +751,16 @@ def _(allstar_select, mo):
 
 @app.cell(hide_code=True)
 def _():
-    allstar_cols = ['sdss_id', 'gaia_dr3_source_id', 'ra', 'dec', 'l', 'b', 'plx', 'e_plx', 'pmra', 'e_pmra', 'pmde', 'e_pmde', 'gaia_v_rad', 'gaia_e_v_rad', 'g_mag', 'bp_mag', 'rp_mag', 'j_mag', 'h_mag', 'k_mag', 'w1_mag', 'w2_mag', 'telescope', 'n_good_visits', 'v_rad', 'e_v_rad', 'std_v_rad', 'median_e_v_rad', 'xcsao_teff', 'xcsao_e_teff', 'xcsao_logg', 'xcsao_e_logg', 'xcsao_fe_h', 'xcsao_e_fe_h', 'xcsao_meanrxc', 'snr', 'zwarning_flags', 'nmf_rchi2', 'nmf_flags', 'HR24_cluster_name', 'HR24_mem_prob', 'RUWE']
+    allstar_cols = ['sdss_id', 'gaia_dr3_source_id', 'ra', 'dec', 'l', 'b', 'plx', 'e_plx',
+           'pmra', 'e_pmra', 'pmde', 'e_pmde', 'gaia_v_rad', 'gaia_e_v_rad',
+           'g_mag', 'bp_mag', 'rp_mag', 'j_mag', 'h_mag', 'k_mag', 'w1_mag',
+           'w2_mag', 'telescope', 'n_good_visits', 'v_rad', 'e_v_rad', 'std_v_rad',
+           'median_e_v_rad', 'xcsao_teff', 'xcsao_e_teff', 'xcsao_logg',
+           'xcsao_e_logg', 'xcsao_fe_h', 'xcsao_e_fe_h', 'xcsao_meanrxc', 'snr',
+           'zwarning_flags', 'nmf_rchi2', 'nmf_flags', 'ix_spectrum',
+           'HR24_cluster_name', 'HR24_mem_prob', 'RUWE', 'teff', 'e_teff', 'logg',
+           'e_logg', 'fe_h', 'e_fe_h', 'result_flags', 'flag_warn', 'flag_bad',
+           'bn_v_r', 'e_bn_v_r']
     return (allstar_cols,)
 
 
@@ -789,7 +818,6 @@ def _(
     wavelength,
 ):
     if save_spectra_button.value:
-
 
         if outfilename.value:
 
@@ -894,7 +922,7 @@ def _(mo, outfilename):
     access_md_code = mo.md(
         f"""
     ```python
-    with h5py.File(f"home/data/{outfilename.value}.h5", "r") as spectra_f:
+    with h5py.File(f"/home/jovyan/home/data/{outfilename.value}.h5", "r") as spectra_f:
 
         allstar_loaded = spectra_f["/allstar"][()]
         flux_loaded = spectra_f["/spectra/flux"][:]
@@ -912,7 +940,7 @@ def _(mo, outfilename):
 
     `/allstar` comes with 
 
-    `["sdss_id", "gaia_dr3_source_id", "ra", "dec", "l", "b", "plx", "e_plx", "pmra", "e_pmra", "pmde","e_pmde", "gaia_v_rad", "gaia_e_v_rad", "g_mag", "bp_mag", "rp_mag", "j_mag", "h_mag", "k_mag", "w1_mag", "w2_mag", "telescope", "n_good_visits", "v_rad", "e_v_rad", "std_v_rad", "median_e_v_rad", "xcsao_teff", "xcsao_e_teff", "xcsao_logg", "xcsao_e_logg", "xcsao_fe_h", "xcsao_e_fe_h", "xcsao_meanrxc", "snr", "zwarning_flags", "nmf_rchi2", "nmf_flags", "HR24_cluster_name", "HR24_mem_prob", "RUWE"]`
+    `['sdss_id', 'gaia_dr3_source_id', 'ra', 'dec', 'l', 'b', 'plx', 'e_plx', 'pmra', 'e_pmra', 'pmde', 'e_pmde', 'gaia_v_rad', 'gaia_e_v_rad', 'g_mag', 'bp_mag', 'rp_mag', 'j_mag', 'h_mag', 'k_mag', 'w1_mag', 'w2_mag', 'telescope', 'n_good_visits', 'v_rad', 'e_v_rad', 'std_v_rad', 'median_e_v_rad', 'xcsao_teff', 'xcsao_e_teff', 'xcsao_logg', 'xcsao_e_logg', 'xcsao_fe_h', 'xcsao_e_fe_h', 'xcsao_meanrxc', 'snr', 'zwarning_flags', 'nmf_rchi2', 'nmf_flags', 'HR24_cluster_name', 'HR24_mem_prob', 'RUWE', 'teff', 'e_teff', 'logg', 'e_logg', 'fe_h', 'e_fe_h', 'result_flags', 'flag_warn', 'flag_bad', 'bn_v_r', 'e_bn_v_r']`
 
 
     Tip 💡:  `/allstar` can immediately be turned into a `pd.DataFrame()`
