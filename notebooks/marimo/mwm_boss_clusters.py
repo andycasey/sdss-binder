@@ -1,7 +1,7 @@
 import marimo
 
 __generated_with = "0.21.1"
-app = marimo.App(width="full")
+app = marimo.App(width="full", app_title="BOSS Star Cluster Explorer")
 
 
 @app.cell(hide_code=True)
@@ -105,8 +105,7 @@ def _():
 
 @app.cell(hide_code=True)
 def _(mo):
-    mo.md(
-        r"""
+    mo.md(r"""
     <div style="display: flex; align-items: center; justify-content: center; position: relative; height: 80px; width: 100%;">
         <img src="https://www.sdss.org/wp-content/uploads/2022/09/sdss-new-logo-72dpi.png"
              style="height: 72px; position: absolute; right: 0;">
@@ -118,8 +117,7 @@ def _(mo):
     </div>
 
     </div>
-    """
-    )
+    """)
     return
 
 
@@ -158,6 +156,29 @@ def _(decode_hdf5_bytes, h5py, mo, np, pd):
 
     hmem["ix_spectrum"] = np.arange(len(hmem))
     vbmem["ix_spectrum"] = np.arange(len(vbmem))
+
+    bool_like_cols = [
+        col for col in hmem.columns
+        if hmem[col].dtype == "object" and
+        set(
+            hmem[col]
+            .dropna()
+            .astype(str)
+            .str.strip()
+            .str.lower()
+            .unique()
+        ).issubset({"true", "false", ""})
+    ]
+
+    for col in bool_like_cols:
+        for df in (hmem, vbmem):
+            df[col] = (
+                df[col]
+                .astype(str)
+                .str.strip()
+                .str.lower()
+                .map({"true": True, "false": False, "": False})
+            )
     return (
         continuum_h,
         continuum_vb,
@@ -653,13 +674,11 @@ def _(catalog, hclu, hclu_display_cols, vbclu, vbclu_display_cols):
 
 @app.cell(hide_code=True)
 def _(mo):
-    mo.md(
-        r"""
+    mo.md(r"""
     <h2 style="text-align: left; font-weight: bold;"> Plot and Select </h2>
 
     To view the spectra, make a box selection by clicking and dragging on the plot, or hold `shift` while doing so to make a lasso selection.
-    """
-    )
+    """)
     return
 
 
@@ -1840,11 +1859,9 @@ def _(access_md, mo):
 
 @app.cell(hide_code=True)
 def _(mo):
-    mo.md(
-        r"""
+    mo.md(r"""
     Please send questions/issues/feedback about this notebook to Kayvon Sharifi (ksharifi1@gsu.edu)
-    """
-    )
+    """)
     return
 
 
