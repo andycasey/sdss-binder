@@ -20,3 +20,4 @@ fitsio
 interpax
 pyneb
 altair
+sdss_access
