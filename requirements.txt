@@ -5,7 +5,7 @@ scipy
 h5py
 corner
 matplotlib
-marimo>=0.20.0
+marimo>=0.20.0,<0.23.4
 plotly
 pip
 lvm_tools>=0.1.0
