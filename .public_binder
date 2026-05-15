@@ -8,6 +8,7 @@ mounts:
   #data/raw: /mnt/home/sdssv/ceph/raw/
 mem: 100G
 users:
+  - alibonkoski@gmail.com
   - amrita2727singh@gmail.com
   - ymamaymamay@gmail.com
   - anastasiia.plotnikova@studenti.unipd.it
@@ -60,4 +61,3 @@ users:
   - aure.amerio@gmail.com
   - mcosens@carnegiescience.edu
   - ggollotti@flatironinstitute.org
-  - alibonkoski@gmail.com
