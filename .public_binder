@@ -8,6 +8,7 @@ mounts:
   #data/raw: /mnt/home/sdssv/ceph/raw/
 mem: 100G
 users:
+  - malechaaleck@gmail.com
   - alibonkoski@gmail.com
   - amrita2727singh@gmail.com
   - ymamaymamay@gmail.com
