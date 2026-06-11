@@ -52,6 +52,31 @@ def _():
             "font.family": font_prop.get_name(),
         }
     )
+
+    def to_recarray_safe(df):
+        """
+        Converts a DataFrame to np.recarray suitable for HDF5:
+        - numeric columns stay numeric
+        - text/bytes columns become fixed-width bytes
+        """
+        df_new = df.copy()
+        rec_dtype = []
+        for col in df_new.columns:
+            vals = df_new[col]
+            if np.issubdtype(vals.dtype, np.number):
+                rec_dtype.append((col, vals.dtype))
+            else:
+
+                s = vals.fillna("").apply(
+                    lambda x: x.decode("utf-8") if isinstance(x, bytes) else str(x)
+                )
+
+                n = s.str.len().max() + 4
+                rec_dtype.append((col, f"S{n}"))
+                df_new[col] = s.astype(f"S{n}")
+
+        return df_new.to_records(index=False)
+
     return (
         LogNorm,
         Normalize,
@@ -65,6 +90,7 @@ def _():
         np,
         pd,
         plt,
+        to_recarray_safe,
     )
 
 
@@ -1137,6 +1163,7 @@ def _(
     save_spectra_button,
     save_subset_option,
     selected_allstar,
+    to_recarray_safe,
     wavelength,
 ):
     if save_spectra_button.value:
@@ -1149,9 +1176,8 @@ def _(
 
                     with h5py.File(outfile_path, "w") as outfile_f:
                         if save_subset_option.value == "all uploaded IDs":
-                            allstar_rec = allstar.assign(
-                                telescope=lambda df: df["telescope"].astype("S6")
-                            ).to_records(index=False)
+     
+                            allstar_rec = to_recarray_safe(allstar)
 
                             outfile_f.create_dataset(
                                 "/allstar", data=allstar_rec[allstar_cols]
@@ -1176,9 +1202,8 @@ def _(
                             savemessage = mo.md(f"Done saving to `{outfile}` ✅ ")
                         else:
                             if len(selected_allstar):
-                                allstar_rec = selected_allstar.assign(
-                                    telescope=lambda df: df["telescope"].astype("S6")
-                                ).to_records(index=False)
+    
+                                allstar_rec = to_recarray_safe(allstar)
 
                                 outfile_f.create_dataset(
                                     "/allstar", data=allstar_rec[allstar_cols]
