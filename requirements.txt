@@ -21,3 +21,4 @@ interpax
 pyneb
 altair
 sdss-access
+gdown
