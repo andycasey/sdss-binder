@@ -169,9 +169,6 @@ def _(decode_hdf5_bytes, h5py, mo, np, pd):
 
     hmem["ix_spectrum"] = np.arange(len(hmem))
     vbmem["ix_spectrum"] = np.arange(len(vbmem))
-
-    hmem = hmem.rename(columns={"e_bn_v_r": "bn_e_v_r"})
-    vbmem = vbmem.rename(columns={"e_bn_v_r": "bn_e_v_r"})
     return (
         continuum_h,
         continuum_vb,
@@ -598,7 +595,8 @@ def _(hclu, np, vbclu):
     hclu["HR24 Association Name"] = hclu.Name.str.replace("_", " ")
     hclu["HR24 Age (Myr)"] = np.round(10**hclu.logAge50 / 1e6, 1)
     hclu["HR24 Distance (pc)"] = np.round(hclu.dist50, 1)
-    hclu["Number of Members with BOSS Spectrum"] = hclu.N_stars_w_BOSS_spectrum
+    hclu["Number of Members with BOSS Spectrum"] = hclu.N_stars_w_spectrum
+    hclu["Number of BOSS Spectra"] = hclu.N_spectra
     hclu["HR24 Association Type"] = hclu["Type"].map(
         {
             "o": "open cluster",
@@ -613,16 +611,19 @@ def _(hclu, np, vbclu):
         "HR24 Association Name",
         "HR24 Association Type",
         "Number of Members with BOSS Spectrum",
+        "Number of BOSS Spectra",
         "HR24 Distance (pc)",
         "HR24 Age (Myr)",
     ]
 
     vbclu["VB21 Globular Cluster Name"] = vbclu.VB21_cluster_name
-    vbclu["Number of Members with BOSS Spectrum"] = vbclu.N_stars_w_BOSS_spectrum
+    vbclu["Number of Members with BOSS Spectrum"] = vbclu.N_stars_w_spectrum
+    vbclu["Number of BOSS Spectra"] = vbclu.N_spectra
 
     vbclu_display_cols = [
         "VB21 Globular Cluster Name",
         "Number of Members with BOSS Spectrum",
+        "Number of BOSS Spectra"
     ]
     return hclu_display_cols, vbclu_display_cols
 
