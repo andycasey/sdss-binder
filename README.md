@@ -73,6 +73,17 @@ See the [LVM notebooks README](notebooks/lvm/README.md) for more detailed descri
 |---|---|
 | [![](https://img.shields.io/badge/launch-Jupyter-F37626?logo=jupyter&logoColor=white)](https://sdsc-binder.flatironinstitute.org/~acasey/sdss?urlpath=lab/tree/notebooks/lvm/hilder-demo.ipynb) | **Getting Started**: Getting started with LVM data — reading and plotting calibrated, sky-subtracted spectra from `lvmSFrame` files, by _Thomas Hilder_ |
 
+### DR20 DAP / DRP tutorials
+| Launch | Notebook |
+|---|---|
+| [![](https://img.shields.io/badge/launch-Jupyter-F37626?logo=jupyter&logoColor=white)](https://sdsc-binder.flatironinstitute.org/~acasey/sdss?urlpath=lab/tree/notebooks/lvm/dr20/lvm_dr20_SFrame_view.ipynb) | **SFrame Viewer**: Open, inspect, and interactively explore an LVM DRP `SFrame` product, using the DR20 Helix Nebula exposure, by _Sebastian F. Sanchez and the LVM team_ |
+| [![](https://img.shields.io/badge/launch-Jupyter-F37626?logo=jupyter&logoColor=white)](https://sdsc-binder.flatironinstitute.org/~acasey/sdss?urlpath=lab/tree/notebooks/lvm/dr20/lvm_dr20_helix_nebula_DAP_tutorial.ipynb) | **Helix Nebula DAP Tutorial**: Handling a DR20 DAP file for the Helix Nebula — RGB and line maps, parametric/non-parametric products, and integrated line catalogs; recreates plots from Sánchez et al. 2025, by _Sebastian F. Sanchez and the LVM team_ |
+| [![](https://img.shields.io/badge/launch-Jupyter-F37626?logo=jupyter&logoColor=white)](https://sdsc-binder.flatironinstitute.org/~acasey/sdss?urlpath=lab/tree/notebooks/lvm/dr20/lvm_dr20_Mosaic_DAP_tutorial.ipynb) | **Mosaic DAP Tutorial**: Build mosaics from several DR20 DAP files (M33 pointings) — line maps, BPT diagrams, and kinematics, by _Sebastian F. Sanchez and the LVM team_ |
+| [![](https://img.shields.io/badge/launch-Jupyter-F37626?logo=jupyter&logoColor=white)](https://sdsc-binder.flatironinstitute.org/~acasey/sdss?urlpath=lab/tree/notebooks/lvm/dr20/lvm_dr20_drpall_dapall_qa_bitmask.ipynb) | **QA Bitmask Tutorial**: Read the DR20 `drpall`, `dapall`, and `qcall` summary products and decode `qa_bitmask` quality flags for science selection, by _Sebastian F. Sanchez and the LVM team_ |
+| [![](https://img.shields.io/badge/launch-Jupyter-F37626?logo=jupyter&logoColor=white)](https://sdsc-binder.flatironinstitute.org/~acasey/sdss?urlpath=lab/tree/notebooks/lvm/dr20/lvm_dr20_generate_model_tutorial.ipynb) | **Generate Model Tutorial**: Reconstruct DAP output-model products from the `INFO` extension of a DAP FITS file, by _Sebastian F. Sanchez and the LVM team_ |
+| [![](https://img.shields.io/badge/launch-Jupyter-F37626?logo=jupyter&logoColor=white)](https://sdsc-binder.flatironinstitute.org/~acasey/sdss?urlpath=lab/tree/notebooks/lvm/dr20/lvm_dr20_read_model_tutorial.ipynb) | **Read Model Tutorial**: Read an LVM DR20 DAP model file and visualise the reconstructed spectral components, by _Sebastian F. Sanchez and the LVM team_ |
+| [![](https://img.shields.io/badge/launch-Jupyter-F37626?logo=jupyter&logoColor=white)](https://sdsc-binder.flatironinstitute.org/~acasey/sdss?urlpath=lab/tree/notebooks/lvm/dr20/lvm_dr20_read_model_tutorial_documented_v2.ipynb) | **Read Model Tutorial (Detailed)**: A more heavily documented version of the DR20 model-file reading tutorial, by _Sebastian F. Sanchez and the LVM team_ |
+
 ### `spectracles` (spectrospatial modelling)
 
 #### Single emission line tutorial
