@@ -8,6 +8,8 @@
 
 Tutorials for working with SDSS-V LVM DR20 data products (DRP `SFrame` and DAP files). All by _Sebastian F. Sanchez and the LVM team_.
 
+These notebooks download their data from the SAS, which needs the SDSS collaboration credentials because DR20 is not public yet. See the [DR20 README](dr20/README.md) for how that works and how to avoid being prompted.
+
 - **[dr20/lvm_dr20_SFrame_view.ipynb](dr20/lvm_dr20_SFrame_view.ipynb)**: How to open, inspect, visualize, and interactively explore an LVM DRP `SFrame` product, using the DR20 Helix Nebula (NGC 7293) exposure as an example. Covers loading via `sdss_access`/`Tree` with a local fallback, reconstructing narrow-band slices from the RSS, an interactive fiber/spectrum viewer, and exporting selected spectra.
 - **[dr20/lvm_dr20_helix_nebula_DAP_tutorial.ipynb](dr20/lvm_dr20_helix_nebula_DAP_tutorial.ipynb)**: How to handle a DR20 DAP file, using the Helix Nebula (NGC 7293) as an example: inspecting the product, generating RGB and individual line maps, separating parametric and non-parametric products, and building integrated line catalogs. Recreates plots from Sánchez et al. 2025.
 - **[dr20/lvm_dr20_Mosaic_DAP_tutorial.ipynb](dr20/lvm_dr20_Mosaic_DAP_tutorial.ipynb)**: How to build mosaics from several DR20 DAP files, using the M33 pointings as an example: RGB and line maps, BPT diagrams, kinematics and radial structure, and stellar-continuum products.
