@@ -5,6 +5,10 @@ scipy
 h5py
 corner
 matplotlib
+# Provides the `jupyter-matplotlib` frontend extension that `%matplotlib widget`
+# needs. It must be installed when the image is built: installing it from a
+# terminal in a running session does not register the extension.
+ipympl>=0.9.4
 marimo>=0.20.0,<0.23.4
 plotly
 pip
