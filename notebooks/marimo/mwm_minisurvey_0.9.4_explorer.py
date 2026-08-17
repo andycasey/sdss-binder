@@ -30,12 +30,11 @@ def _():
     import pandas as pd
     import h5py
     from io import StringIO
-    from pathlib import Path
     from scipy.ndimage import gaussian_filter1d
     import matplotlib as mpl
     import matplotlib.pyplot as plt
     from matplotlib.colors import LogNorm, Normalize
-    from pathlib import Path
+    from sdss_semaphore.targeting import TargetingFlags
 
     font_path = "notebooks/static/GoogleSans-Regular.ttf"
     mpl.font_manager.fontManager.addfont(font_path)
@@ -76,6 +75,7 @@ def _():
         LogNorm,
         Normalize,
         StringIO,
+        TargetingFlags,
         block_path,
         gaussian_filter1d,
         h5py,
@@ -85,185 +85,283 @@ def _():
     )
 
 
+@app.cell
+def _(TargetingFlags, block_path, h5py, np, pd):
+    block = {}
+
+    with h5py.File(block_path, "r") as block_f:
+
+        block["sdss_id"] = block_f["meta/sdss_id"][:]
+        block["telescope"] = block_f["meta/telescope"][:]
+        block["summary"] = block_f["summary"][()]
+        block["flux"] = block_f["spectra/flux"][:]
+        block["continuum"] = block_f["spectra/continuum"][:]
+        block["model_flux"] = block_f["spectra/model_flux"][:]
+        block["model_continuum"] = block_f["spectra/model_continuum"][:]
+        block["wavelength"] = block_f["spectra/wavelength"][()]
+
+    flags = TargetingFlags(block["summary"]["sdss5_target_flags"], sdssc2bv=3)
+    block["carton_names"] = flags.get_carton_name()
+
+    summary_colnames = [
+        summary_colname
+        for summary_colname in block["summary"].dtype.names
+        if (len(block["summary"][summary_colname].shape) == 1)
+    ]
+    summary_df = pd.DataFrame(
+        block["summary"].astype(block["summary"].dtype.newbyteorder("="))[
+            summary_colnames
+        ]
+    )
+    summary_df["sdss_id"] = block["sdss_id"].astype(
+        block["sdss_id"].dtype.newbyteorder("=")
+    )
+    summary_df["telescope"] = block["telescope"].astype(
+        block["telescope"].dtype.newbyteorder("=")
+    )
+    summary_df["carton_names"] = np.array(
+        [", ".join(carts) for carts in block["carton_names"]]
+    )
+    return block, flags, summary_df
+
+
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    <h2 style="text-align: left; font-weight: bold;"> Upload list of SDSS or <i>Gaia</i> DR3 source IDs </h2>
+    <h2 style="text-align: left; font-weight: bold;"> Select cartons or upload a list of IDs </h2>
     """)
     return
 
 
 @app.cell
 def _(mo):
+    selection_type_options = ["select cartons", "upload a list of IDs"]
+    selection_type_radio = mo.ui.radio(
+        options=selection_type_options, value="select cartons", inline=True
+    )
+
+    selection_type_radio
+    return (selection_type_radio,)
+
+
+@app.cell
+def _(flags, mo, selection_type_radio):
+    carton_selection_options = sorted(flags.all_carton_names)
+    # sorted(set().union(*block["carton_names"]))
+
+    # carton_selection_val = [cart for cart in carton_selection_options if "snc" in cart]
+    carton_selection_val = ["mwm_snc_100pc"]
+
+    carton_selection_multiselect = mo.ui.multiselect(
+        options=carton_selection_options,
+        label="select cartons",
+        value=carton_selection_val,
+    )
+
+    carton_selection_display = mo.md("")
+
+    if selection_type_radio.value == "select cartons":
+        carton_selection_display = mo.hstack(
+            [carton_selection_multiselect], justify="start", widths=[5]
+        )
+
+    carton_selection_display
+    return (carton_selection_multiselect,)
+
+
+@app.cell
+def _(mo, selection_type_radio):
     id_list_options = ["SDSS ID", "Gaia DR3 source ID"]
+
     id_list_radio = mo.ui.radio(
         options=id_list_options, value="SDSS ID", inline=True, label="choose ID type: "
     )
+
     id_list_upload_button = mo.ui.file(
         kind="button", label="upload ID list (.txt, .csv)", filetypes=[".txt", ".csv"]
     )
 
-    mo.hstack([id_list_radio, id_list_upload_button], justify="start", gap=2)
+    id_list_display = mo.md("")
+
+    if selection_type_radio.value == "upload a list of IDs":
+        id_list_display = mo.hstack(
+            [id_list_radio, id_list_upload_button], justify="start", gap=2
+        )
+
+    id_list_display
     return id_list_radio, id_list_upload_button
 
 
 @app.cell
-def _(StringIO, id_list_upload_button, np):
-    upload_file = id_list_upload_button.value
-
-    upload_id_list_str = upload_file[0].contents.decode("utf-8")
-
-    try:
-
-        upload_id = np.loadtxt(StringIO(upload_id_list_str), dtype=np.int64)
-
-    except ValueError:
-
-        upload_id = np.loadtxt(StringIO(upload_id_list_str), dtype=np.int64, skiprows=1)
-
-    return (upload_id,)
-
-
-@app.cell
-def _(block_path, h5py):
-    with h5py.File(block_path, "r") as block_f:
-
-        block_sdss_id = block_f["meta/sdss_id"][:]
-        block_telescope = block_f["meta/telescope"][:]
-        block_summary = block_f["summary"][()]
-        block_flux = block_f["spectra/flux"][:]
-        block_continuum = block_f["spectra/continuum"][:]
-        wavelength = block_f["spectra/wavelength"][:]
-    return (
-        block_continuum,
-        block_flux,
-        block_sdss_id,
-        block_summary,
-        block_telescope,
-        wavelength,
-    )
-
-
-@app.cell
-def _(block_sdss_id, block_summary, id_list_radio):
-    if id_list_radio.value == "SDSS ID":
-        block_id = block_sdss_id
-    else:
-        block_id = block_summary["gaia_dr3_source_id"]
-    return (block_id,)
-
-
-@app.cell
-def _(block_flux, block_id, id_list_radio, mo, np, upload_id):
-    ix = np.where(np.isin(block_id, upload_id))[0]
-
+def _(
+    StringIO,
+    block,
+    carton_selection_multiselect,
+    id_list_radio,
+    id_list_upload_button,
+    mo,
+    np,
+    selection_type_radio,
+    summary_df,
+):
     no_spectra_callout = mo.md("")
 
-    if len(ix) == 0:
+    if selection_type_radio.value == "select cartons":
 
-        no_spectra_callout = mo.md(
-            text=f"those {id_list_radio.value}s aren't in `mwmAllStar-0.9.4.fits` 🤔"
-        ).callout(kind="danger")
+        selected_cartons = set(carton_selection_multiselect.value)
 
-    elif np.all(np.all(np.isnan(block_flux[ix]), axis=1)):
-        no_spectra_callout = mo.md(
-            text=f"those {id_list_radio.value}s are in `mwmAllStar-0.9.4.fits` but they don't have `mwmStar-0.9.4` spectra 🤔"
-        ).callout(kind="danger")
+        block_ix = [
+            i
+            for i, names in enumerate(block["carton_names"])
+            if not selected_cartons.isdisjoint(names)
+        ]
 
-    ix = ix[~np.all(np.isnan(block_flux[ix]), axis=1)]
-    no_spectra_cond = len(ix) == 0
+        if (len(block_ix) == 0) and (len(carton_selection_multiselect.value)):
+            no_spectra_callout = mo.md(
+                text=f"carton(s) not in `mwmAllStar-0.9.4.fits` 🤔"
+            ).callout(kind="danger")
+
+        elif np.all(np.all(np.isnan(block["flux"][block_ix]), axis=1)) and (
+            len(carton_selection_multiselect.value)
+        ):
+            no_spectra_callout = mo.md(
+                text=f"carton(s) in `mwmAllStar-0.9.4.fits` but no corresponding `mwmStar-0.9.4` spectra 🤔"
+            ).callout(kind="danger")
+
+        block_ix = np.array(block_ix)
+
+        if not len(block_ix) == 0:
+
+            block_ix = block_ix[~np.all(np.isnan(block["flux"][block_ix]), axis=1)]
+
+    if selection_type_radio.value == "upload a list of IDs":
+
+        upload_file = id_list_upload_button.value
+
+        upload_id_list_str = upload_file[0].contents.decode("utf-8")
+
+        try:
+
+            upload_id = np.loadtxt(StringIO(upload_id_list_str), dtype=np.int64)
+
+        except ValueError:
+
+            upload_id = np.loadtxt(
+                StringIO(upload_id_list_str), dtype=np.int64, skiprows=1
+            )
+
+        if id_list_radio.value == "SDSS ID":
+            block_id = summary_df.sdss_id.values
+        else:
+            block_id = summary_df.gaia_dr3_source_id.values
+
+        block_ix = np.where(np.isin(block_id, upload_id))[0]
+
+        if len(block_ix) == 0:
+
+            no_spectra_callout = mo.md(
+                text=f"{id_list_radio.value}s not in `mwmAllStar-0.9.4.fits` 🤔"
+            ).callout(kind="danger")
+
+        elif np.all(np.all(np.isnan(block["flux"][block_ix]), axis=1)):
+            no_spectra_callout = mo.md(
+                text=f"{id_list_radio.value}s in `mwmAllStar-0.9.4.fits` but no corresponding `mwmStar-0.9.4` spectra 🤔"
+            ).callout(kind="danger")
+
+        block_ix = block_ix[~np.all(np.isnan(block["flux"][block_ix]), axis=1)]
+
+    no_spectra_cond = len(block_ix) == 0
 
     no_spectra_callout
-    return ix, no_spectra_cond
+    return block_ix, no_spectra_cond
 
 
 @app.cell
-def _(
-    block_continuum,
-    block_flux,
-    block_sdss_id,
-    block_summary,
-    block_telescope,
-    ix,
-    np,
-    pd,
-):
-    sdss_ids = block_sdss_id[ix]
-    telescopes = block_telescope[ix]
-    summary = block_summary[ix]
-    fluxes = block_flux[ix]
-    continua = block_continuum[ix]
-
-    # sdss5_target_flags = summary['sdss5_target_flags']
-
-    summary_colnames = [name for name in summary.dtype.names if summary[name].ndim == 1]
-    summary_ = summary[summary_colnames]
-    summary_df = pd.DataFrame(summary_.astype(summary_.dtype.newbyteorder("=")))
-
-    summary_df["sdss_id"] = sdss_ids.astype(sdss_ids.dtype.newbyteorder("="))
-    summary_df["telescope"] = telescopes.astype(telescopes.dtype.newbyteorder("="))
-
-    summary_df["spec_ix"] = np.arange(len(summary_df))
-    return continua, fluxes, summary_df
-
-
-@app.cell
-def _(mo, no_spectra_cond, summary_df):
+def _(block_ix, mo, no_spectra_cond, summary_df):
     mo.stop(no_spectra_cond)
 
-    match_message = mo.md(f"""
-    Uploaded IDs matched to 
-    * `mwmAllStar-0.9.4.fits`
-    * `astraAllStarASPCAP-0.9.4.fits`
-    * `astraAllStarApogeeNet-0.9.4.fits`
-    * `astraAllStarAstroNNdist-0.9.4.fits`
-    * `astraAllStarAstroNN-0.9.4.fits` 
+    df_match = summary_df.iloc[block_ix].copy()
+    df_match["ix_spectrum"] = block_ix
+    return (df_match,)
 
-    are shown below. Columns that are outputs of astra pipelines begin with the pipeline name, e.g. 'teff' in `astraAllStarASPCAP-0.9.4.fits` here is 'aspcap_teff'.
 
-    """)
+@app.cell
+def _(mo, no_spectra_cond, selection_type_radio, summary_df):
+    mo.stop(no_spectra_cond)
 
-    col_sel_val = [
+    if selection_type_radio.value == "select cartons":
+
+        match_message = mo.md(f"""
+        Rows in `mwmAllStar-0.9.4` matching to carton(s) are shown below, matched to 
+    
+        * `astraAllStarASPCAP-0.9.4.fits`,
+        * `astraAllStarApogeeNet-0.9.4.fits`,
+        * `astraAllStarAstroNNdist-0.9.4.fits`, and 
+        * `astraAllStarAstroNN-0.9.4.fits`.
+    
+        **Astra pipeline column names begin with their pipeline name, e.g. `'teff'` in `astraAllStarASPCAP-0.9.4.fits` is `'aspcap_teff'`**.
+    
+        """)
+
+    if selection_type_radio.value == "upload a list of IDs":
+
+        match_message = mo.md(f"""
+        Rows in `mwmAllStar-0.9.4` matching to uploaded IDs are shown below, matched to 
+    
+        * `astraAllStarASPCAP-0.9.4.fits`,
+        * `astraAllStarApogeeNet-0.9.4.fits`,
+        * `astraAllStarAstroNNdist-0.9.4.fits`, and 
+        * `astraAllStarAstroNN-0.9.4.fits`.
+    
+        **Astra pipeline column names begin with their pipeline name, e.g. `'teff'` in `astraAllStarASPCAP-0.9.4.fits` is `'aspcap_teff'`**.
+    
+        """)
+
+    match_col_sel_val = [
         "sdss_id",
         "telescope",
         "snr",
-        "ra",
-        "dec",
-        "pmra",
-        "pmde",
-        "plx",
-        "l",
-        "b",
-        "gaia_v_rad",
-        "gaia_e_v_rad",
-        "v_rad",
-        "e_v_rad",
         "g_mag",
-        "bp_mag",
-        "rp_mag",
+        "aspcap_flag_bad",
+        "apogeenet_flag_bad",
+        "astroNN_flag_bad",
+        "aspcap_teff",
+        "apogeenet_teff",
+        "astroNN_teff",
+        "aspcap_logg",
+        "apogeenet_logg",
+        "astroNN_logg",
+        "aspcap_m_h_atm",
+        "aspcap_fe_h",
+        "apogeenet_fe_h",
+        "astroNN_fe_h",
     ]
 
-    col_selector = mo.ui.multiselect(
-        options=summary_df.columns, label="select columns to display", value=col_sel_val
+    match_col_multiselect = col_selector = mo.ui.multiselect(
+        options=summary_df.columns,
+        label="select columns to display",
+        value=match_col_sel_val,
     )
 
-    mo.vstack([match_message, col_selector], gap=2)
-    return (col_selector,)
+    mo.vstack([match_message, match_col_multiselect], justify="start")
+    return (match_col_multiselect,)
 
 
 @app.cell
-def _(col_selector, summary_df):
-    summary_df[col_selector.value]
+def _(df_match, match_col_multiselect, mo, no_spectra_cond):
+    mo.stop(no_spectra_cond)
+
+    df_match[match_col_multiselect.value]
     return
 
 
-@app.cell(hide_code=True)
+@app.cell
 def _(mo, no_spectra_cond):
     mo.stop(no_spectra_cond)
     mo.md(r"""
     <h2 style="text-align: left; font-weight: bold;"> Plot and Select to View Spectra</h2>
 
-    make a scatter plot with any of the columns available below.
+    make a scatter plot with any of the columns available below (and above).
     """)
     return
 
@@ -340,7 +438,9 @@ def _(mo, no_spectra_cond):
 
 
 @app.cell
-def _(colorbar, mo):
+def _(colorbar, mo, no_spectra_cond):
+    mo.stop(no_spectra_cond)
+
     if colorbar.value:
 
         cb_col = mo.ui.text(value="snr", label="value")
@@ -363,7 +463,7 @@ def _(colorbar, mo):
     return cb_cmap, cb_col, cb_flip, cb_label, cb_log, cb_range
 
 
-@app.cell(hide_code=True)
+@app.cell
 def _(mo, no_spectra_cond):
     mo.stop(no_spectra_cond)
     mo.md(r"""
@@ -384,6 +484,7 @@ def _(
     cb_range,
     colorbar,
     cuts,
+    df_match,
     flip_x,
     flip_y,
     log_x,
@@ -393,7 +494,7 @@ def _(
     np,
     observatory,
     plt,
-    summary_df,
+    selection_type_radio,
     x_col,
     x_label,
     x_range,
@@ -402,51 +503,55 @@ def _(
     y_range,
 ):
     mo.stop(no_spectra_cond)
+    allstar_hrd = df_match.copy().reset_index(drop=True)
 
-    filtered_allstar = summary_df.copy()
+    n_spectra_hrd = len(allstar_hrd)
 
     if observatory.value == "LCO":
-        filtered_allstar = filtered_allstar[filtered_allstar["telescope"] == b"lco25m"]
+        allstar_hrd = allstar_hrd[allstar_hrd["telescope"] == b"lco25m"]
     elif observatory.value == "APO":
-        filtered_allstar = filtered_allstar[filtered_allstar["telescope"] == b"apo25m"]
+        allstar_hrd = allstar_hrd[allstar_hrd["telescope"] == b"apo25m"]
 
     user_cuts = cuts.value.strip()
 
     if user_cuts:
-        namespace_temp = {
-            col: filtered_allstar[col] for col in filtered_allstar.columns
-        }
+        namespace_temp = {col: allstar_hrd[col] for col in allstar_hrd.columns}
         namespace_temp["np"] = np
 
-        mask_cuts = np.ones(len(filtered_allstar), dtype=bool)
+        mask_cuts = np.ones(len(allstar_hrd), dtype=bool)
         for line in user_cuts.split("\n"):
             line = line.strip()
             if line:
                 mask_cuts &= eval(line, {"__builtins__": {}}, namespace_temp)
 
-        filtered_allstar = filtered_allstar[mask_cuts]
+        allstar_hrd = allstar_hrd[mask_cuts]
 
-    namespace = {col: filtered_allstar[col] for col in filtered_allstar.columns}
+    n_spectra_post_cuts = len(allstar_hrd)
+
+    namespace = {col: allstar_hrd[col] for col in allstar_hrd.columns}
     namespace["np"] = np
 
-    hrd_fig, hrd_ax = plt.subplots(figsize=(10, 6))
+    hrd_fig, hrd_ax = plt.subplots(figsize=(10, 6), constrained_layout=True)
 
     x_vals = eval(x_col.value, {"__builtins__": {}}, namespace)
     y_vals = eval(y_col.value, {"__builtins__": {}}, namespace)
 
-    filtered_allstar = filtered_allstar.assign(x_vals=x_vals, y_vals=y_vals)
+    allstar_hrd = allstar_hrd.assign(x_vals=x_vals, y_vals=y_vals)
 
     hrd_fontsize = 16
 
     if colorbar.value:
         cb_vals = eval(cb_col.value, {"__builtins__": {}}, namespace)
-        filtered_allstar = filtered_allstar.assign(cb_vals=cb_vals)
+        allstar_hrd = allstar_hrd.assign(cb_vals=cb_vals)
+        allstar_hrd = allstar_hrd.loc[allstar_hrd[cb_vals.name].notna()]
+        cb_vals = cb_vals.loc[cb_vals.notna()]
 
         ix_cb_vals = np.argsort(cb_vals)
+
         if cb_flip.value:
             ix_cb_vals = np.flip(ix_cb_vals)
 
-        filtered_allstar = filtered_allstar.iloc[ix_cb_vals]
+        allstar_hrd = allstar_hrd.iloc[ix_cb_vals]
 
         if cb_log.value:
             norm = (
@@ -462,9 +567,9 @@ def _(
             )
 
         sc = hrd_ax.scatter(
-            filtered_allstar["x_vals"],
-            filtered_allstar["y_vals"],
-            c=filtered_allstar["cb_vals"],
+            allstar_hrd["x_vals"],
+            allstar_hrd["y_vals"],
+            c=allstar_hrd["cb_vals"],
             s=10,
             edgecolors="gainsboro",
             lw=0.5,
@@ -476,8 +581,8 @@ def _(
 
     else:
         hrd_ax.scatter(
-            filtered_allstar["x_vals"],
-            filtered_allstar["y_vals"],
+            allstar_hrd["x_vals"],
+            allstar_hrd["y_vals"],
             c="k",
             s=10,
             edgecolors="gainsboro",
@@ -508,41 +613,74 @@ def _(
         hrd_ax.set_ylabel(f"${y_label.value}$", fontsize=hrd_fontsize)
 
     hrd_ax.grid(True, which="both", zorder=-100)
-    n_stars_hrd = len(
-        np.unique(
-            filtered_allstar["sdss_id"].loc[
-                filtered_allstar["x_vals"].notna() & filtered_allstar["y_vals"].notna()
-            ]
-        )
-    )
-    n_spectra_hrd = len(
-        filtered_allstar.loc[
-            filtered_allstar["x_vals"].notna() & filtered_allstar["y_vals"].notna()
-        ]
-    )
-    hrd_tit_str_left = (
-        f"{n_stars_hrd:,} stars" if n_stars_hrd > 1 else f"{n_stars_hrd} star"
-    )
-    hrd_tit_str_right = (
-        f"{n_spectra_hrd:,} spectra"
-        if n_spectra_hrd > 1
-        else f"{n_spectra_hrd} spectrum"
-    )
-    hrd_ax.set_title(hrd_tit_str_left, loc="left", fontsize=hrd_fontsize)
-    hrd_ax.set_title(hrd_tit_str_right, loc="right", fontsize=hrd_fontsize)
 
     hrd = mo.ui.matplotlib(plt.gca(), debounce=True)
 
-    mo.hstack([hrd], justify="center")
-    return filtered_allstar, hrd
+    y_lo, y_hi = sorted(hrd_ax.get_ylim())
+    x_lo, x_hi = sorted(hrd_ax.get_xlim())
+
+    n_stars_plot_hrd_mask = (
+        (allstar_hrd["x_vals"] >= x_lo)
+        & (allstar_hrd["x_vals"] <= x_hi)
+        & (allstar_hrd["y_vals"] >= y_lo)
+        & (allstar_hrd["y_vals"] <= y_hi)
+    )
+
+    n_stars_plot_hrd = len(np.unique(allstar_hrd.loc[n_stars_plot_hrd_mask, "sdss_id"]))
+
+    n_spectra_post_cuts_display = mo.md("")
+
+    if selection_type_radio.value == "select cartons":
+
+        n_spectra_display = mo.stat(
+            value=n_spectra_hrd,
+            label=f"spectra in carton(s)",
+        )
+
+        if user_cuts:
+            n_spectra_post_cuts_display = mo.stat(
+                value=n_spectra_post_cuts, label="spectra in carton(s) after cuts"
+            )
+    else:
+
+        n_spectra_display = mo.stat(
+            value=n_spectra_hrd,
+            label=f"spectra matching to uploaded IDs",
+        )
+
+        if user_cuts:
+            n_spectra_post_cuts_display = mo.stat(
+                value=n_spectra_post_cuts, label="spectra after cuts"
+            )
+
+    n_spectra_plot_display = mo.stat(
+        value=n_stars_plot_hrd,
+        label=f"stars shown on scatter plot",
+    )
+
+    mo.vstack(
+        [
+            mo.hstack(
+                [
+                    n_spectra_display,
+                    n_spectra_post_cuts_display,
+                    n_spectra_plot_display,
+                ],
+                justify="center",
+                gap=10,
+            ),
+            mo.hstack([hrd], justify="center"),
+        ],
+        gap=2,
+    )
+    return allstar_hrd, hrd
 
 
 @app.cell
-def _(filtered_allstar, hrd):
-    select_mask = hrd.value.get_mask(
-        filtered_allstar["x_vals"], filtered_allstar["y_vals"]
-    )
-    selected_allstar = filtered_allstar[select_mask]
+def _(allstar_hrd, hrd, mo, no_spectra_cond):
+    mo.stop(no_spectra_cond)
+    select_mask = hrd.value.get_mask(allstar_hrd["x_vals"], allstar_hrd["y_vals"])
+    selected_allstar = allstar_hrd[select_mask]
     return (selected_allstar,)
 
 
@@ -642,6 +780,12 @@ def _(
 
 
 @app.cell
+def _(spec_color_vals):
+    spec_color_vals.name
+    return
+
+
+@app.cell
 def _(np, selected_allstar, spec_color):
     namespace_select = {col: selected_allstar[col] for col in selected_allstar.columns}
     namespace_select["np"] = np
@@ -650,9 +794,11 @@ def _(np, selected_allstar, spec_color):
 
     allstar_so = selected_allstar.assign(spec_color_vals=spec_color_vals)
 
+    allstar_so = allstar_so.loc[spec_color_vals.notna()]
+    spec_color_vals = spec_color_vals.loc[spec_color_vals.notna()]
     ix_spec_color_vals = np.argsort(spec_color_vals)
     allstar_so = allstar_so.iloc[ix_spec_color_vals].reset_index(drop=True)
-    return (allstar_so,)
+    return allstar_so, spec_color_vals
 
 
 @app.cell
@@ -700,7 +846,8 @@ def _(
 
 
 @app.cell
-def _(mo, smoothing):
+def _(mo, no_spectra_cond, smoothing):
+    mo.stop(no_spectra_cond)
     smooth_sigma_display = mo.md("")
 
     if smoothing.value:
@@ -719,6 +866,9 @@ def _(mo, smoothing):
 @app.cell
 def _(
     DEFAULT_RANGES,
+    block,
+    mo,
+    no_spectra_cond,
     np,
     pan1_xrange,
     pan1_yrange,
@@ -729,8 +879,11 @@ def _(
     pan4_xrange,
     pan4_yrange,
     spec_ranges,
-    wavelength,
 ):
+    mo.stop(no_spectra_cond)
+
+    wavelength = block["wavelength"]
+
     if spec_ranges.value:
         pan1_xmin, pan1_xmax = tuple(
             float(x.strip()) for x in pan1_xrange.value.split(",")
@@ -799,10 +952,10 @@ def _(
     allstar_so,
     ax_ixs,
     ax_lams,
-    continua,
-    fluxes,
+    block,
     gaussian_filter1d,
     mo,
+    no_spectra_cond,
     np,
     pan1_xmax,
     pan1_xmin,
@@ -828,6 +981,7 @@ def _(
     spec_continuum_normalize,
     spec_int,
 ):
+    mo.stop(no_spectra_cond)
     if len(selected_allstar):
 
         fig = plt.figure(figsize=(10, 6), constrained_layout=True)
@@ -847,10 +1001,13 @@ def _(
 
         if spec_continuum_normalize.value:
 
-            flux_sel = fluxes[allstar_so["spec_ix"]] / continua[allstar_so["spec_ix"]]
+            flux_sel = (
+                block["flux"][allstar_so["ix_spectrum"]]
+                / block["continuum"][allstar_so["ix_spectrum"]]
+            )
 
         else:
-            flux_sel = fluxes[allstar_so["spec_ix"]]
+            flux_sel = block["flux"][allstar_so["ix_spectrum"]]
             flux_sel = flux_sel / flux_sel[:, 4187][:, None]
 
         for spec_i in reversed(range(len(allstar_so))):
@@ -921,7 +1078,8 @@ def _(
 
 
 @app.cell
-def _(mo, selected_allstar):
+def _(mo, no_spectra_cond, selected_allstar):
+    mo.stop(no_spectra_cond)
     if len(selected_allstar):
         spec_df_display_check = mo.ui.checkbox(
             label=r"display table information for selected subset"
@@ -934,26 +1092,27 @@ def _(mo, selected_allstar):
 
 
 @app.cell
-def _(mo, spec_df_display_check, summary_df):
+def _(mo, no_spectra_cond, spec_df_display_check, summary_df):
+    mo.stop(no_spectra_cond)
     if spec_df_display_check.value:
         col_sel_val_ = [
             "sdss_id",
             "telescope",
             "snr",
-            "ra",
-            "dec",
-            "pmra",
-            "pmde",
-            "plx",
-            "l",
-            "b",
-            "gaia_v_rad",
-            "gaia_e_v_rad",
-            "v_rad",
-            "e_v_rad",
             "g_mag",
-            "bp_mag",
-            "rp_mag",
+            "aspcap_flag_bad",
+            "apogeenet_flag_bad",
+            "astroNN_flag_bad",
+            "aspcap_teff",
+            "apogeenet_teff",
+            "astroNN_teff",
+            "aspcap_logg",
+            "apogeenet_logg",
+            "astroNN_logg",
+            "aspcap_m_h_atm",
+            "aspcap_fe_h",
+            "apogeenet_fe_h",
+            "astroNN_fe_h",
         ]
 
         col_selector_ = mo.ui.multiselect(
@@ -968,7 +1127,8 @@ def _(mo, spec_df_display_check, summary_df):
 
 
 @app.cell
-def _(allstar_so, col_selector_, mo, spec_df_display_check):
+def _(allstar_so, col_selector_, mo, no_spectra_cond, spec_df_display_check):
+    mo.stop(no_spectra_cond)
     if spec_df_display_check.value:
         spec_df = allstar_so[col_selector_.value]
     else:
