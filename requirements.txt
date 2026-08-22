@@ -1,4 +1,4 @@
-sdss-binder @ git+https://github.com/andycasey/sdss-binder.git@1719f1419a2275ffc1f57d85073fdc617c5a3bee
+sdss-binder @ git+https://github.com/andycasey/sdss-binder.git@6b3006d1c16cbccfa99ddd0361f0f227db0ba127
 numpy
 pandas
 scipy
