@@ -12,6 +12,7 @@ authors = [
 ]
 dependencies = [
     "jupyter-server-proxy",
+    "anywidget"
 ]
 
 [project.urls]
