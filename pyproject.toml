@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sdss-binder"
-version = "0.0.3"
+version = "0.0.4"
 description = "Introduction to using SDSS data with BinderHub"
 readme = "README.md"
 authors = [
@@ -23,4 +23,4 @@ intro = "sdss_binder:setup_intro"
 marimo = "sdss_binder:setup_marimo"
 
 [tool.setuptools.package-data]
-sdss_binder = ["sdss.ico", "sdss.svg", "marimo.svg"]
+sdss_binder = ["sdss.ico", "sdss.svg", "marimo.svg", "samp.js"]
