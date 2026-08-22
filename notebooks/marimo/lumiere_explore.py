@@ -8,7 +8,7 @@ app = marimo.App(width="medium")
 def _():
 
     import marimo as mo
-    from samp_widget import SampClient
+    from sdss_binder.samp_widget import SampClient
 
     client = SampClient(
         subscriptions=["sdss.spectrum.view"],
