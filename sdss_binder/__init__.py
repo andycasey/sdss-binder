@@ -4,6 +4,8 @@ import os
 import base64
 import secrets
 
+__version__ = "0.0.3"
+
 def setup_intro():
 	return {
                 'command': [],
