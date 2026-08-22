@@ -32,7 +32,7 @@ jobs:
             # Sync notebooks/ and requirements.txt from main
             # Delete first to ensure deletions propagate, then checkout fresh
             rm -rf notebooks/
-            git checkout origin/main -- notebooks/ requirements.txt
+            git checkout origin/main -- notebooks/ requirements.txt samp.js
 
             # Replace only the users list in this branch's .public_binder
             yq -i '.users = load("/tmp/main_public_binder.yml").users' .public_binder
