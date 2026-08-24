@@ -3,7 +3,7 @@ spec: andycasey/sdss-binder/rusty
 mounts:
   data/work/lvm: /mnt/home/sdssv/ceph/work/lvm/
   data/work/mwm: /mnt/home/sdssv/ceph/work/scifest/
-  data/work/mwm/lumiere: /mnt/home/sdssv/ceph/work/acasey/lumiere/
+  data/work/acasey/lumiere: /mnt/home/sdssv/ceph/work/acasey/lumiere/
   data/release: /mnt/home/sdssv/ceph/release/
   data/sandbox: /mnt/home/sdssv/ceph/work/sandbox/
   #data/raw: /mnt/home/sdssv/ceph/raw/
