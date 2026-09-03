@@ -9,9 +9,8 @@ The Flatiron Institute has two BinderHubs that host SDSS data:
 
 ## Access
 
-**Note, these instructions changed on 2026-03-11. You will need to specify a Gmail.com account as your Flatiron Institute Binder.**
+You will need to specify a Gmail.com account as your Flatiron Institute Binder. Here's how you do that:
 
-To access BinderHub:
 1. Log in to the [SDSS Internal Collaboration Database](https://soji.sdss.utah.edu/collaboration/people/accounts/user) and add a Gmail domain to your profile (e.g., me@gmail.com).
 2. Set the _Flatiron Institute Binder_ email address as to your Gmail address, and save your profile.
 
