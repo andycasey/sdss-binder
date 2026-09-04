@@ -38,4 +38,30 @@ chmod +x "${SKILLS_DIR}"/*/scripts/*.sh 2>/dev/null || true
 # baked into the public image (users still need their own login either way).
 curl -fsSL https://claude.ai/install.sh | bash
 
+# --- Node.js -------------------------------------------------------------
+# marimo's GitHub Copilot integration shells out to node, so it must be on the
+# PATH of the marimo server process (not just an interactive shell).
+#
+# repo2docker's PythonBuildPack subclasses CondaBuildPack, whose base env
+# already pins nodejs=20 and puts ${CONDA_DIR}/bin on PATH, so node is normally
+# present. What repo2docker does NOT create is ${NPM_DIR}/lib/node_modules --
+# it only mkdirs ${NPM_DIR} itself -- which is why `npx` dies with
+# "ENOENT: lstat '/srv/npm/lib'". ${NPM_DIR} is chowned to ${NB_USER} and
+# ${NPM_DIR}/bin is on PATH, so we can fix both from here without root.
+NPM_DIR="${NPM_DIR:-/srv/npm}"
+mkdir -p "${NPM_DIR}/lib/node_modules" "${NPM_DIR}/bin"
+
+# Fall back to an upstream build if the base env ever stops shipping node, or
+# ships one too old for the Copilot language server.
+NODE_MAJOR="$(node --version 2>/dev/null | sed 's/^v//; s/\..*//')" || NODE_MAJOR=""
+if [[ -z "${NODE_MAJOR}" || "${NODE_MAJOR}" -lt 18 ]]; then
+    NODE_VERSION=24.20.0   # LTS "Krypton"
+    curl -fsSL "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.xz" \
+        | tar -xJ -C "${NPM_DIR}" --strip-components=1
+fi
+
+# Fail the build rather than ship an image where Copilot silently cannot start.
+node --version
+npm --version
+
 touch "${HOME}/postBuild.complete"
