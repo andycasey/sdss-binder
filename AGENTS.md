@@ -73,6 +73,27 @@ to `Path(__file__).resolve().parent` so the pair can be moved without breaking. 
 `notebooks/lvm/README.md` for LVM notebooks) describing the notebook and crediting the
 author.
 
+### The launch link in that row
+
+The launch badge must link **straight to the notebook on the reader's already-running
+server**, through JupyterHub's `user-redirect` endpoint. Do not use a BinderHub launch
+URL (`/~acasey/sdss?urlpath=...`): it asks for a *second* server, so anyone who already
+has one gets the "Launching your Binder failed" page instead of the notebook.
+
+| Notebook | Launch URL |
+|---|---|
+| marimo | `https://sdsc-binder.flatironinstitute.org/hub/user-redirect/marimo/?file=notebooks/mwm/example_mo.py` |
+| Jupyter | `https://sdsc-binder.flatironinstitute.org/hub/user-redirect/lab/tree/notebooks/mwm/example.ipynb` |
+
+The two formats differ, and the difference is easy to get wrong: **marimo takes the
+notebook as a `?file=` query parameter** and 404s on `/marimo/edit/<path>`, while Jupyter
+takes it as a path under `lab/tree/`. `user-redirect` resolves to whoever is logged in,
+so a single link works for the whole collaboration — never hard-code a username.
+
+Point new rows at Popeye (`sdsc-binder.flatironinstitute.org`) to match the rest of the
+table; the Rusty equivalent is the same URL with `binder.flatironinstitute.org`. Copy the
+shields.io badge markup from a neighbouring row so the styling stays consistent.
+
 ### marimo notebooks must end in `_mo.py`
 
 A marimo notebook is a plain `.py` file, so nothing about the extension marks it as a
