@@ -42,6 +42,12 @@ def _(mo):
 
 @app.cell
 def _(np):
+    from pathlib import Path
+
+    # Resolve the masks relative to this notebook rather than hardcoding an
+    # absolute path, so the pair survives being moved between folders.
+    elem_masks_dir = Path(__file__).resolve().parent / "elem_masks"
+
     elements = ['Al','C_1','C_12_13','Ca','Ce','Co','Cr','Cu','Fe','K','Mg','Mn','N','Na','Nd','Ni','O','P','S','Si','Ti','Ti_2','V']
 
     def get_apogee_segment_indices():
@@ -62,7 +68,7 @@ def _(np):
     mask_dic = {}
 
     for e in elements:
-        ferre_e_mask = np.loadtxt("/home/jovyan/notebooks/marimo/elem_masks/"+e+".mask")
+        ferre_e_mask = np.loadtxt(elem_masks_dir / f"{e}.mask")
         e_mask = np.zeros(ferre_mask.size, dtype=bool)
         e_mask[ferre_mask] = ferre_e_mask
         mask_dic[e] = e_mask
