@@ -15,6 +15,12 @@ marimo==0.24.0
 # config as package data, so like ipympl it only registers if it is installed
 # when the image is built.
 marimo-jupyter-extension>=0.4.0
+# The extension ships a prebuilt labextension built against @jupyterlab/* ^4.5.6.
+# The conda base env resolved jupyterlab 4.1.5, against which the federated
+# extension will not load -- no marimo launcher icon and no *_mo.py file
+# association. Verified: 4.6.3 reports "@marimo-team/jupyter-extension enabled
+# OK", and notebook 6.5.6 / nbclassic still import alongside it.
+jupyterlab>=4.5.6,<5
 plotly
 pip
 lvm_tools>=0.1.0
@@ -32,6 +38,13 @@ altair
 sdss-access
 gdown
 pydantic-ai-slim[anthropic,openai]
+# anthropic/openai/mcp/pydantic-ai all pull anyio, unpinned, so a rebuild floats
+# it forward. anyio >=4.12 made `anyio.abc` a lazy attribute, which httpcore
+# <=1.0.5 dereferences at import time -- so `import httpcore` raises
+# AttributeError, jupyterlab.labapp fails to import, /lab is never served, and
+# the root URL silently falls back to the nbclassic /tree UI with no launcher.
+# httpcore >=1.0.7 handles lazy anyio. Do not drop this pin.
+httpcore>=1.0.7
 anthropic
 openai
 mcp
