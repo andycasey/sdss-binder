@@ -1,0 +1,41 @@
+#!/bin/bash
+set -euo pipefail
+
+# marimo-pair and the marimo skill pack are plain Agent Skills: a SKILL.md plus
+# a couple of bash scripts under skills/<name>/ in their repos. `npx skills add`
+# only copies those directories into ~/.claude/skills. npx is unusable in the
+# repo2docker image (npm's global prefix is /srv/npm, which does not exist
+# unless the Node buildpack ran, and is not writable by ${NB_USER} anyway), so
+# clone and copy instead. No node, no uv required.
+
+SKILLS_DIR="${HOME}/.claude/skills"
+mkdir -p "${SKILLS_DIR}"
+
+install_skills() {
+    local repo="$1"; shift
+    local tmp
+    tmp="$(mktemp -d)"
+    git clone --depth 1 "https://github.com/${repo}.git" "${tmp}"
+    local name
+    for name in "$@"; do
+        rm -rf "${SKILLS_DIR:?}/${name}"
+        cp -r "${tmp}/skills/${name}" "${SKILLS_DIR}/${name}"
+    done
+    rm -rf "${tmp}"
+}
+
+# The pairing protocol itself.
+install_skills marimo-team/marimo-pair marimo-pair
+
+# Authoring skills from the marimo pack. Trim this list if you don't want them.
+install_skills marimo-team/skills \
+    marimo-notebook jupyter-to-marimo anywidget wasm-compatibility
+
+chmod +x "${SKILLS_DIR}"/*/scripts/*.sh 2>/dev/null || true
+
+# The agent has to run *inside* the container, next to the marimo kernel.
+# Installs to ~/.local/bin/claude. Drop this block if you don't want Claude Code
+# baked into the public image (users still need their own login either way).
+curl -fsSL https://claude.ai/install.sh | bash
+
+touch "${HOME}/postBuild.complete"
