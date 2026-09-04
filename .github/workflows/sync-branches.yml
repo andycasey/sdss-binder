@@ -29,17 +29,21 @@ jobs:
           for branch in rusty popeye; do
             git switch $branch
 
-            # Sync notebooks/ and requirements.txt from main
-            # Delete first to ensure deletions propagate, then checkout fresh
+            # Sync notebooks/ and the shared root files from main.
+            # Delete notebooks/ first so deletions propagate, then checkout fresh.
+            # postBuild / AGENTS.md / CLAUDE.md are identical on rusty and popeye,
+            # so main is the single source of truth for them.
             rm -rf notebooks/
-            git checkout origin/main -- notebooks/ requirements.txt
+            git checkout origin/main -- \
+                notebooks/ requirements.txt postBuild AGENTS.md CLAUDE.md
 
             # Replace only the users list in this branch's .public_binder
             yq -i '.users = load("/tmp/main_public_binder.yml").users' .public_binder
 
             # Commit and push if anything changed
             if [ -n "$(git status --porcelain)" ]; then
-              git add notebooks/ requirements.txt .public_binder
+              git add notebooks/ requirements.txt .public_binder \
+                  postBuild AGENTS.md CLAUDE.md
               git commit -m "Sync notebooks, requirements, and users from main"
               git push origin $branch
             fi
