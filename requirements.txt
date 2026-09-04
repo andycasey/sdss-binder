@@ -28,3 +28,11 @@ sdss-access
 gdown
 pydantic-ai-slim
 anthropic
+openai
+mcp
+pytest
+websockets
+python-lsp-server
+ruff
+vegafusion
+vl-convert-python
