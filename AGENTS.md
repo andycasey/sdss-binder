@@ -75,12 +75,28 @@ own machine. Then:
 gh repo fork andycasey/sdss-binder --clone --remote
 cd sdss-binder
 git switch -c my-notebook origin/main
-cp ~/path/to/notebook.py notebooks/marimo/
-git add notebooks/marimo/notebook.py README.md
+cp ~/my_analysis_mo.py notebooks/marimo/
+git add notebooks/marimo/my_analysis_mo.py README.md
 git commit -m "Add <notebook> notebook"
 git push -u origin my-notebook
 gh pr create --repo andycasey/sdss-binder --base main --web
 ```
 
-Note that the home directory in a Binder session is **ephemeral** — it is discarded when
-the server shuts down. Push the branch before the session ends, or the work is lost.
+### Keep the working copy in the home directory, not under `notebooks/`
+
+Everything under `notebooks/` is **baked into the image** and is replaced wholesale on
+every rebuild. So once a pull request is merged, it propagates to every BinderHub — and
+the merged version overwrites whatever is sitting at that path.
+
+That makes editing in place a trap. If the user drafts their notebook at the very path
+they proposed for it — say `notebooks/marimo/my_analysis_mo.py` — then the moment their
+PR is merged and the image rebuilds, their in-progress local edits at that path are
+overwritten by the merged copy. Any work done after opening the PR is silently lost.
+
+**Recommend they keep the working copy in their home directory** (`~/my_analysis_mo.py`)
+and treat `notebooks/` as read-only. Copy it into `notebooks/` only inside the fork
+clone, when preparing the PR, as in the commands above. After it is merged, drop the
+home-directory copy and use the shipped one.
+
+Also note the home directory is **ephemeral** — it is discarded when the server shuts
+down. Push the branch before the session ends, or the work is lost.
