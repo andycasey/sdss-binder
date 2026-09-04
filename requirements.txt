@@ -26,3 +26,5 @@ pyneb
 altair
 sdss-access
 gdown
+pydantic-ai-slim
+anthropic
