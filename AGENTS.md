@@ -31,22 +31,26 @@ Put it in `notebooks/`, in the appropriate sub-folder, under a descriptive name:
 
 | Sub-folder | Contents |
 |---|---|
-| `notebooks/marimo/` | All marimo notebooks (`*_mo.py`), for any survey |
-| `notebooks/mwm/` | Milky Way Mapper Jupyter notebooks (`.ipynb`) |
-| `notebooks/lvm/` | Local Volume Mapper Jupyter notebooks (`.ipynb`) |
+| `notebooks/mwm/` | Milky Way Mapper notebooks — Jupyter (`.ipynb`) and marimo (`*_mo.py`) |
+| `notebooks/lvm/` | Local Volume Mapper notebooks — Jupyter (`.ipynb`) and marimo (`*_mo.py`) |
 | `notebooks/lvm/dr20/` | LVM DR20 DRP/DAP tutorials |
 | `notebooks/static/` | Images and small assets referenced by notebooks |
 
-Name the file for what it does, not for who wrote it — `mwm_white_dwarfs_mo.py`,
-`lvm_dr20_SFrame_view.ipynb`. Add a row to the top-level `README.md` table (and to
+Sort by survey, not by notebook format: a marimo notebook goes in its survey's folder
+alongside the Jupyter ones, and the `_mo.py` suffix is what tells the two apart.
+
+Name the file for what it does, not for who wrote it — and don't repeat the folder in
+the filename: `white_dwarfs_mo.py` under `notebooks/mwm/`, not `mwm_white_dwarfs_mo.py`.
+Data files a notebook needs sit beside it (`notebooks/mwm/elem_masks/`), loaded relative
+to `Path(__file__).resolve().parent` so the pair can be moved without breaking. Add a row to the top-level `README.md` table (and to
 `notebooks/lvm/README.md` for LVM notebooks) describing the notebook and crediting the
 author.
 
 ### marimo notebooks must end in `_mo.py`
 
 A marimo notebook is a plain `.py` file, so nothing about the extension marks it as a
-notebook. **Give every marimo notebook a `_mo.py` suffix** — `mwm_carton_filter_mo.py`,
-not `mwm_carton_filter.py`. That suffix is what gets the file recognised and opened as a
+notebook. **Give every marimo notebook a `_mo.py` suffix** — `carton_filter_mo.py`,
+not `carton_filter.py`. That suffix is what gets the file recognised and opened as a
 marimo notebook; without it, it is treated as an ordinary Python script to run, and the
 user gets a text editor instead of a notebook.
 
@@ -75,8 +79,8 @@ own machine. Then:
 gh repo fork andycasey/sdss-binder --clone --remote
 cd sdss-binder
 git switch -c my-notebook origin/main
-cp ~/home/my_analysis_mo.py notebooks/marimo/
-git add notebooks/marimo/my_analysis_mo.py README.md
+cp ~/home/my_analysis_mo.py notebooks/mwm/
+git add notebooks/mwm/my_analysis_mo.py README.md
 git commit -m "Add <notebook> notebook"
 git push -u origin my-notebook
 gh pr create --repo andycasey/sdss-binder --base main --web
@@ -91,7 +95,7 @@ both.
 the image and replaced wholesale on every rebuild. Once a pull request is merged it
 propagates to every BinderHub, and the merged version overwrites whatever sits at that
 path. So drafting a notebook at the very path proposed for it — say
-`notebooks/marimo/my_analysis_mo.py` — is a trap: the moment the PR is merged and the
+`notebooks/mwm/my_analysis_mo.py` — is a trap: the moment the PR is merged and the
 image rebuilds, any edits made after opening the PR are silently overwritten by the
 merged copy.
 
