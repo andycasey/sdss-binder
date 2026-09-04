@@ -63,3 +63,66 @@ fi
 # Fail the build rather than ship an image where Copilot silently cannot start.
 node --version
 npm --version
+
+# --- GitHub CLI ----------------------------------------------------------
+# `gh` is not in Ubuntu's default apt repos, so apt.txt cannot install it, and
+# there is no way to add GitHub's third-party apt repo from a repo2docker build
+# (that needs root, which postBuild does not have). The official release is a
+# single static Go binary, so just unpack it.
+#
+# ${NPM_DIR}/bin is created above, is chowned to ${NB_USER}, and is on PATH for
+# *every* process in the image -- including the marimo/Jupyter server -- which
+# ~/.local/bin is not guaranteed to be.
+#
+# Resolve the current version from the /releases/latest redirect rather than the
+# GitHub API: unauthenticated API calls are rate-limited per build-node IP, and
+# a shared BinderHub will hit that ceiling.
+GH_VERSION="$(curl -fsSLI -o /dev/null -w '%{url_effective}' \
+    https://github.com/cli/cli/releases/latest | sed 's#.*/tag/v##')"
+if [[ -z "${GH_VERSION}" ]]; then
+    echo "could not determine the latest gh release" >&2
+    exit 1
+fi
+curl -fsSL "https://github.com/cli/cli/releases/download/v${GH_VERSION}/gh_${GH_VERSION}_linux_amd64.tar.gz" \
+    | tar -xz -C "${NPM_DIR}" --strip-components=1 \
+        "gh_${GH_VERSION}_linux_amd64/bin/gh"
+
+# Fail the build rather than ship an image where `gh` is silently missing.
+gh --version
+
+# --- marimo Jupyter extension --------------------------------------------
+# marimo-jupyter-extension (requirements.txt) adds marimo to the JupyterLab
+# launcher and proxies it through the Jupyter server. Two of its defaults are
+# wrong for this image, and both are decided here at build time:
+#
+#   1. It spawns `marimo edit --sandbox` unless no_sandbox is set. --sandbox
+#      builds a fresh uv environment per notebook from that notebook's PEP 723
+#      inline metadata, so notebooks opened from the launcher would NOT see
+#      astropy, sdss-binder, lvm_tools, spectracles, sdss-semaphore or anything
+#      else installed here. We want the image environment.
+#
+#   2. Its uvx_path trait defaults to $(dirname $UV)/uvx whenever ${UV} is set
+#      in the environment. That silently switches it to
+#      `uvx marimo[sandbox]>=...`, ignoring the marimo pinned in
+#      requirements.txt. Pin it to empty so mode selection is never ambient.
+#      (Note the extension depends on uv, so uv is now present in the image.)
+#
+# Written to ${HOME}/.jupyter rather than the env prefix so it cannot collide
+# with config the extension itself installs as package data.
+JUPYTER_CONF_DIR="${HOME}/.jupyter"
+mkdir -p "${JUPYTER_CONF_DIR}"
+JUPYTER_CONF="${JUPYTER_CONF_DIR}/jupyter_server_config.py"
+if ! grep -q 'MarimoProxyConfig' "${JUPYTER_CONF}" 2>/dev/null; then
+    cat >> "${JUPYTER_CONF}" <<'EOF'
+
+# Run marimo in the image environment, not a per-notebook uv sandbox.
+c.MarimoProxyConfig.no_sandbox = True
+# Never fall back to `uvx marimo` just because ${UV} happens to be set.
+c.MarimoProxyConfig.uvx_path = ""
+EOF
+fi
+
+# With uvx mode off and no explicit marimo_path, the extension resolves marimo
+# via shutil.which(), so it must be on PATH at *runtime*. Fail the build now
+# rather than serve a launcher button that dies on click.
+marimo --version

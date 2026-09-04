@@ -10,6 +10,11 @@ matplotlib
 # terminal in a running session does not register the extension.
 ipympl>=0.9.4
 marimo==0.24.0
+# Adds the marimo entry to the JupyterLab launcher and proxies marimo through the
+# Jupyter server. It ships a prebuilt labextension plus a jupyter-server-proxy
+# config as package data, so like ipympl it only registers if it is installed
+# when the image is built.
+marimo-jupyter-extension>=0.4.0
 plotly
 pip
 lvm_tools>=0.1.0
