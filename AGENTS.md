@@ -75,28 +75,34 @@ own machine. Then:
 gh repo fork andycasey/sdss-binder --clone --remote
 cd sdss-binder
 git switch -c my-notebook origin/main
-cp ~/my_analysis_mo.py notebooks/marimo/
+cp ~/home/my_analysis_mo.py notebooks/marimo/
 git add notebooks/marimo/my_analysis_mo.py README.md
 git commit -m "Add <notebook> notebook"
 git push -u origin my-notebook
 gh pr create --repo andycasey/sdss-binder --base main --web
 ```
 
-### Keep the working copy in the home directory, not under `notebooks/`
+### Keep the working copy in `~/home/`, not under `notebooks/`
 
-Everything under `notebooks/` is **baked into the image** and is replaced wholesale on
-every rebuild. So once a pull request is merged, it propagates to every BinderHub — and
-the merged version overwrites whatever is sitting at that path.
+Two different things can destroy a user's work here, and `~/home/` is the answer to
+both.
 
-That makes editing in place a trap. If the user drafts their notebook at the very path
-they proposed for it — say `notebooks/marimo/my_analysis_mo.py` — then the moment their
-PR is merged and the image rebuilds, their in-progress local edits at that path are
-overwritten by the merged copy. Any work done after opening the PR is silently lost.
+**`notebooks/` is overwritten on merge.** Everything under `notebooks/` is baked into
+the image and replaced wholesale on every rebuild. Once a pull request is merged it
+propagates to every BinderHub, and the merged version overwrites whatever sits at that
+path. So drafting a notebook at the very path proposed for it — say
+`notebooks/marimo/my_analysis_mo.py` — is a trap: the moment the PR is merged and the
+image rebuilds, any edits made after opening the PR are silently overwritten by the
+merged copy.
 
-**Recommend they keep the working copy in their home directory** (`~/my_analysis_mo.py`)
-and treat `notebooks/` as read-only. Copy it into `notebooks/` only inside the fork
-clone, when preparing the PR, as in the commands above. After it is merged, drop the
-home-directory copy and use the shipped one.
+**The rest of the session is ephemeral.** The working directory is the image itself, so
+anything written beside `notebooks/` is discarded when the server shuts down.
 
-Also note the home directory is **ephemeral** — it is discarded when the server shuts
-down. Push the branch before the session ends, or the work is lost.
+`~/home/` is the exception — it persists across sessions. **Recommend the user keep
+their working copy in `~/home/`** (`~/home/my_analysis_mo.py`) and treat `notebooks/` as
+read-only. Copy it into `notebooks/` only inside the fork clone when preparing the PR,
+as in the commands above. Once it is merged, drop the `~/home/` copy and use the shipped
+one.
+
+Even so, push the branch before the session ends rather than relying on `~/home/` to
+hold an unpushed change.
