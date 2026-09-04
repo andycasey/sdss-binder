@@ -45,6 +45,20 @@ pydantic-ai-slim[anthropic,openai]
 # the root URL silently falls back to the nbclassic /tree UI with no launcher.
 # httpcore >=1.0.7 handles lazy anyio. Do not drop this pin.
 httpcore>=1.0.7
+# repo2docker's base conda env ships jupyterhub 3.1.1, whose `_scrub_headers`
+# parses the request Cookie header with an unguarded SimpleCookie() on *every*
+# request (jupyterhub/log.py). marimo derives its session-cookie name from the
+# proxy base URL, so on this hub -- where usernames are email addresses -- the
+# name contains an "@", SimpleCookie rejects it as an illegal key, and the
+# CookieError is raised from inside tornado's finish(). Every marimo request,
+# including the websocket it needs to run cells, is torn down after its headers
+# are written: the notebook loads but shows no cells and executes nothing.
+# JupyterHub 4.0.0 wrapped that parse in try/except; there is no 3.2.x. Pinning
+# to 5.3.0 matches the version the Flatiron hub itself runs, and resolves
+# against this image without changing any other package. Do not go to 6.x: it
+# drags tornado 6.4 -> 6.5.8 under jupyter-server-proxy/nbclassic, and puts the
+# singleuser server ahead of the hub.
+jupyterhub==5.3.0
 anthropic
 openai
 mcp
