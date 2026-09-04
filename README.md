@@ -48,24 +48,39 @@ Here is a summary of the key differences:
 There is some flexibility about what is mirrored at Popeye, and expansion is possible. Tell Andy what products you need!
 
 # Notebooks
+
+The launch links below open a notebook **on the server you already have running**, rather
+than asking BinderHub for a new one — asking for a second one is what produces the
+"Launching your Binder failed" page. If you don't have a server yet, start one at
+[Popeye](https://sdsc-binder.flatironinstitute.org/~acasey/sdss) first, then come back and
+click through.
+
+They default to Popeye. To open the same notebook on Rusty, swap the hostname to
+`binder.flatironinstitute.org` and leave the rest of the URL alone:
+
+| | URL |
+|---|---|
+| marimo | `https://sdsc-binder.flatironinstitute.org/hub/user-redirect/marimo/?file=notebooks/mwm/example_mo.py` |
+| Jupyter | `https://sdsc-binder.flatironinstitute.org/hub/user-redirect/lab/tree/notebooks/mwm/example.ipynb` |
+
 ## General
 | Launch | Notebook |
 |---|---|
-| [![](https://img.shields.io/badge/launch-Jupyter-F37626?logo=jupyter&logoColor=white)](https://sdsc-binder.flatironinstitute.org/~acasey/sdss?urlpath=lab/tree/notebooks/introduction.ipynb) | **Getting Started**: A welcome guide covering access, data, storage, compute, and how to use BinderHub, by _Andy Casey_ |
+| [![](https://img.shields.io/badge/launch-Jupyter-F37626?logo=jupyter&logoColor=white)](https://sdsc-binder.flatironinstitute.org/hub/user-redirect/lab/tree/notebooks/introduction.ipynb) | **Getting Started**: A welcome guide covering access, data, storage, compute, and how to use BinderHub, by _Andy Casey_ |
 
 ## Milky Way Mapper (MWM)
 | Launch | Notebook |
 |---|---|
-| [![](https://img.shields.io/badge/launch-marimo-6925d3?logo=marimo&logoColor=white)](https://sdsc-binder.flatironinstitute.org/~acasey/sdss?urlpath=marimo/edit/notebooks/mwm/inspect_aspcap_fits_mo.py) | **Inspect ASPCAP fits**: Interactively inspect ASPCAP fits to APOGEE spectra, by _Emily Griffith_ |
-| [![](https://img.shields.io/badge/launch-marimo-6925d3?logo=marimo&logoColor=white)](https://sdsc-binder.flatironinstitute.org/~acasey/sdss?urlpath=marimo/edit/notebooks/mwm/minisurvey_0.9.4_explorer_mo.py) | **MWM Mini-Survey 0.9.4 Explorer**: Interactive explorer for `mwmStar-0.9.4` APOGEE spectra — look up sources and view spectra, by _Kayvon Sharifi_ |
-| [![](https://img.shields.io/badge/launch-marimo-6925d3?logo=marimo&logoColor=white)](https://sdsc-binder.flatironinstitute.org/~acasey/sdss?urlpath=marimo/edit/notebooks/mwm/boss_explorer_mo.py) | **BOSS Explorer**: Interactive explorer for MWM DR20 BOSS spectra — look up sources, view spectra, export subsets, by _Kayvon Sharifi_ |
-| [![](https://img.shields.io/badge/launch-marimo-6925d3?logo=marimo&logoColor=white)](https://sdsc-binder.flatironinstitute.org/~acasey/sdss?urlpath=marimo/edit/notebooks/mwm/boss_clusters_mo.py) | **BOSS Star Cluster Explorer**: Interactive explorer for MWM DR20 BOSS spectra of stars in clusters and moving groups — filter by stellar association, view and export spectra, by _Kayvon Sharifi_ |
-| [![](https://img.shields.io/badge/launch-Jupyter-F37626?logo=jupyter&logoColor=white)](https://sdsc-binder.flatironinstitute.org/~acasey/sdss?urlpath=lab/tree/notebooks/mwm/ApogeeReduction-jl-demo.ipynb) | **APOGEE Demo**: Demonstration of working with ApogeeReduction.jl data products (exposures, radial velocities, spectra), by _Kevin McKinnon_ |
-| [![](https://img.shields.io/badge/launch-marimo-6925d3?logo=marimo&logoColor=white)](https://sdsc-binder.flatironinstitute.org/~acasey/sdss?urlpath=marimo/edit/notebooks/mwm/arjl_explorer_mo.py) | **ApogeeReduction.jl Explorer**: Interactive explorer for APOGEE spectra from ApogeeReduction.jl — search sources by SDSS ID, view source information, radial velocity plots with phase folding, and interactive spectrum visualization, by _Andy Casey_ |
-| [![](https://img.shields.io/badge/launch-marimo-6925d3?logo=marimo&logoColor=white)](https://sdsc-binder.flatironinstitute.org/~acasey/sdss?urlpath=marimo/edit/notebooks/mwm/carton_filter_mo.py) | **APOGEE Exposure Filter**: Create subsets of ApogeeReduction.jl-reduced spectra based on SDSS-V targeting flags (cartons and programs), and export the filtered data, by _Andy Casey_ |
-| [![](https://img.shields.io/badge/launch-marimo-6925d3?logo=marimo&logoColor=white)](https://sdsc-binder.flatironinstitute.org/~acasey/sdss?urlpath=marimo/edit/notebooks/mwm/white_dwarfs_mo.py) | **White Dwarf Spectrum Fitter**: JAX-based DA-type white dwarf spectrum fitter with bicubic grid interpolation, Levenberg-Marquardt optimization, and Hessian-based uncertainties, by _Andy Casey_ |
-| [![](https://img.shields.io/badge/launch-marimo-6925d3?logo=marimo&logoColor=white)](https://sdsc-binder.flatironinstitute.org/~acasey/sdss?urlpath=marimo/edit/notebooks/mwm/lumiere_explore_mo.py) | **Lumiere / TOPCAT Explorer**: Browse Lumiere spectra and broadcast source selections to a running TOPCAT over SAMP, by _Andy Casey_ |
-| [![](https://img.shields.io/badge/launch-Jupyter-F37626?logo=jupyter&logoColor=white)](https://sdsc-binder.flatironinstitute.org/~acasey/sdss?urlpath=lab/tree/notebooks/mwm/asrtra_demo.ipynb) | **Astra Demo**: Demonstration of working with various astra data products (summary files, spectra, model spectra, block file), by _Ilija Medan_ |
+| [![](https://img.shields.io/badge/launch-marimo-6925d3?logo=marimo&logoColor=white)](https://sdsc-binder.flatironinstitute.org/hub/user-redirect/marimo/?file=notebooks/mwm/inspect_aspcap_fits_mo.py) | **Inspect ASPCAP fits**: Interactively inspect ASPCAP fits to APOGEE spectra, by _Emily Griffith_ |
+| [![](https://img.shields.io/badge/launch-marimo-6925d3?logo=marimo&logoColor=white)](https://sdsc-binder.flatironinstitute.org/hub/user-redirect/marimo/?file=notebooks/mwm/minisurvey_0.9.4_explorer_mo.py) | **MWM Mini-Survey 0.9.4 Explorer**: Interactive explorer for `mwmStar-0.9.4` APOGEE spectra — look up sources and view spectra, by _Kayvon Sharifi_ |
+| [![](https://img.shields.io/badge/launch-marimo-6925d3?logo=marimo&logoColor=white)](https://sdsc-binder.flatironinstitute.org/hub/user-redirect/marimo/?file=notebooks/mwm/boss_explorer_mo.py) | **BOSS Explorer**: Interactive explorer for MWM DR20 BOSS spectra — look up sources, view spectra, export subsets, by _Kayvon Sharifi_ |
+| [![](https://img.shields.io/badge/launch-marimo-6925d3?logo=marimo&logoColor=white)](https://sdsc-binder.flatironinstitute.org/hub/user-redirect/marimo/?file=notebooks/mwm/boss_clusters_mo.py) | **BOSS Star Cluster Explorer**: Interactive explorer for MWM DR20 BOSS spectra of stars in clusters and moving groups — filter by stellar association, view and export spectra, by _Kayvon Sharifi_ |
+| [![](https://img.shields.io/badge/launch-Jupyter-F37626?logo=jupyter&logoColor=white)](https://sdsc-binder.flatironinstitute.org/hub/user-redirect/lab/tree/notebooks/mwm/ApogeeReduction-jl-demo.ipynb) | **APOGEE Demo**: Demonstration of working with ApogeeReduction.jl data products (exposures, radial velocities, spectra), by _Kevin McKinnon_ |
+| [![](https://img.shields.io/badge/launch-marimo-6925d3?logo=marimo&logoColor=white)](https://sdsc-binder.flatironinstitute.org/hub/user-redirect/marimo/?file=notebooks/mwm/arjl_explorer_mo.py) | **ApogeeReduction.jl Explorer**: Interactive explorer for APOGEE spectra from ApogeeReduction.jl — search sources by SDSS ID, view source information, radial velocity plots with phase folding, and interactive spectrum visualization, by _Andy Casey_ |
+| [![](https://img.shields.io/badge/launch-marimo-6925d3?logo=marimo&logoColor=white)](https://sdsc-binder.flatironinstitute.org/hub/user-redirect/marimo/?file=notebooks/mwm/carton_filter_mo.py) | **APOGEE Exposure Filter**: Create subsets of ApogeeReduction.jl-reduced spectra based on SDSS-V targeting flags (cartons and programs), and export the filtered data, by _Andy Casey_ |
+| [![](https://img.shields.io/badge/launch-marimo-6925d3?logo=marimo&logoColor=white)](https://sdsc-binder.flatironinstitute.org/hub/user-redirect/marimo/?file=notebooks/mwm/white_dwarfs_mo.py) | **White Dwarf Spectrum Fitter**: JAX-based DA-type white dwarf spectrum fitter with bicubic grid interpolation, Levenberg-Marquardt optimization, and Hessian-based uncertainties, by _Andy Casey_ |
+| [![](https://img.shields.io/badge/launch-marimo-6925d3?logo=marimo&logoColor=white)](https://sdsc-binder.flatironinstitute.org/hub/user-redirect/marimo/?file=notebooks/mwm/lumiere_explore_mo.py) | **Lumiere / TOPCAT Explorer**: Browse Lumiere spectra and broadcast source selections to a running TOPCAT over SAMP, by _Andy Casey_ |
+| [![](https://img.shields.io/badge/launch-Jupyter-F37626?logo=jupyter&logoColor=white)](https://sdsc-binder.flatironinstitute.org/hub/user-redirect/lab/tree/notebooks/mwm/asrtra_demo.ipynb) | **Astra Demo**: Demonstration of working with various astra data products (summary files, spectra, model spectra, block file), by _Ilija Medan_ |
 
 ## Local Volume Mapper (LVM)
 
@@ -73,34 +88,34 @@ See the [LVM notebooks README](notebooks/lvm/README.md) for more detailed descri
 
 | Launch | Notebook |
 |---|---|
-| [![](https://img.shields.io/badge/launch-Jupyter-F37626?logo=jupyter&logoColor=white)](https://sdsc-binder.flatironinstitute.org/~acasey/sdss?urlpath=lab/tree/notebooks/lvm/hilder-demo.ipynb) | **Getting Started**: Getting started with LVM data — reading and plotting calibrated, sky-subtracted spectra from `lvmSFrame` files, by _Thomas Hilder_ |
+| [![](https://img.shields.io/badge/launch-Jupyter-F37626?logo=jupyter&logoColor=white)](https://sdsc-binder.flatironinstitute.org/hub/user-redirect/lab/tree/notebooks/lvm/hilder-demo.ipynb) | **Getting Started**: Getting started with LVM data — reading and plotting calibrated, sky-subtracted spectra from `lvmSFrame` files, by _Thomas Hilder_ |
 
 ### DR20 DAP / DRP tutorials
 | Launch | Notebook |
 |---|---|
-| [![](https://img.shields.io/badge/launch-Jupyter-F37626?logo=jupyter&logoColor=white)](https://sdsc-binder.flatironinstitute.org/~acasey/sdss?urlpath=lab/tree/notebooks/lvm/dr20/lvm_dr20_SFrame_view.ipynb) | **SFrame Viewer**: Open, inspect, and interactively explore an LVM DRP `SFrame` product, using the DR20 Helix Nebula exposure, by _Sebastian F. Sanchez and the LVM team_ |
-| [![](https://img.shields.io/badge/launch-Jupyter-F37626?logo=jupyter&logoColor=white)](https://sdsc-binder.flatironinstitute.org/~acasey/sdss?urlpath=lab/tree/notebooks/lvm/dr20/lvm_dr20_helix_nebula_DAP_tutorial.ipynb) | **Helix Nebula DAP Tutorial**: Handling a DR20 DAP file for the Helix Nebula — RGB and line maps, parametric/non-parametric products, and integrated line catalogs; recreates plots from Sánchez et al. 2025, by _Sebastian F. Sanchez and the LVM team_ |
-| [![](https://img.shields.io/badge/launch-Jupyter-F37626?logo=jupyter&logoColor=white)](https://sdsc-binder.flatironinstitute.org/~acasey/sdss?urlpath=lab/tree/notebooks/lvm/dr20/lvm_dr20_Mosaic_DAP_tutorial.ipynb) | **Mosaic DAP Tutorial**: Build mosaics from several DR20 DAP files (M33 pointings) — line maps, BPT diagrams, and kinematics, by _Sebastian F. Sanchez and the LVM team_ |
-| [![](https://img.shields.io/badge/launch-Jupyter-F37626?logo=jupyter&logoColor=white)](https://sdsc-binder.flatironinstitute.org/~acasey/sdss?urlpath=lab/tree/notebooks/lvm/dr20/lvm_dr20_drpall_dapall_qa_bitmask.ipynb) | **QA Bitmask Tutorial**: Read the DR20 `drpall`, `dapall`, and `qcall` summary products and decode `qa_bitmask` quality flags for science selection, by _Sebastian F. Sanchez and the LVM team_ |
-| [![](https://img.shields.io/badge/launch-Jupyter-F37626?logo=jupyter&logoColor=white)](https://sdsc-binder.flatironinstitute.org/~acasey/sdss?urlpath=lab/tree/notebooks/lvm/dr20/lvm_dr20_generate_model_tutorial.ipynb) | **Generate Model Tutorial**: Reconstruct DAP output-model products from the `INFO` extension of a DAP FITS file, by _Sebastian F. Sanchez and the LVM team_ |
-| [![](https://img.shields.io/badge/launch-Jupyter-F37626?logo=jupyter&logoColor=white)](https://sdsc-binder.flatironinstitute.org/~acasey/sdss?urlpath=lab/tree/notebooks/lvm/dr20/lvm_dr20_read_model_tutorial.ipynb) | **Read Model Tutorial**: Read an LVM DR20 DAP model file and visualise the reconstructed spectral components, by _Sebastian F. Sanchez and the LVM team_ |
-| [![](https://img.shields.io/badge/launch-Jupyter-F37626?logo=jupyter&logoColor=white)](https://sdsc-binder.flatironinstitute.org/~acasey/sdss?urlpath=lab/tree/notebooks/lvm/dr20/lvm_dr20_read_model_tutorial_documented_v2.ipynb) | **Read Model Tutorial (Detailed)**: A more heavily documented version of the DR20 model-file reading tutorial, by _Sebastian F. Sanchez and the LVM team_ |
+| [![](https://img.shields.io/badge/launch-Jupyter-F37626?logo=jupyter&logoColor=white)](https://sdsc-binder.flatironinstitute.org/hub/user-redirect/lab/tree/notebooks/lvm/dr20/lvm_dr20_SFrame_view.ipynb) | **SFrame Viewer**: Open, inspect, and interactively explore an LVM DRP `SFrame` product, using the DR20 Helix Nebula exposure, by _Sebastian F. Sanchez and the LVM team_ |
+| [![](https://img.shields.io/badge/launch-Jupyter-F37626?logo=jupyter&logoColor=white)](https://sdsc-binder.flatironinstitute.org/hub/user-redirect/lab/tree/notebooks/lvm/dr20/lvm_dr20_helix_nebula_DAP_tutorial.ipynb) | **Helix Nebula DAP Tutorial**: Handling a DR20 DAP file for the Helix Nebula — RGB and line maps, parametric/non-parametric products, and integrated line catalogs; recreates plots from Sánchez et al. 2025, by _Sebastian F. Sanchez and the LVM team_ |
+| [![](https://img.shields.io/badge/launch-Jupyter-F37626?logo=jupyter&logoColor=white)](https://sdsc-binder.flatironinstitute.org/hub/user-redirect/lab/tree/notebooks/lvm/dr20/lvm_dr20_Mosaic_DAP_tutorial.ipynb) | **Mosaic DAP Tutorial**: Build mosaics from several DR20 DAP files (M33 pointings) — line maps, BPT diagrams, and kinematics, by _Sebastian F. Sanchez and the LVM team_ |
+| [![](https://img.shields.io/badge/launch-Jupyter-F37626?logo=jupyter&logoColor=white)](https://sdsc-binder.flatironinstitute.org/hub/user-redirect/lab/tree/notebooks/lvm/dr20/lvm_dr20_drpall_dapall_qa_bitmask.ipynb) | **QA Bitmask Tutorial**: Read the DR20 `drpall`, `dapall`, and `qcall` summary products and decode `qa_bitmask` quality flags for science selection, by _Sebastian F. Sanchez and the LVM team_ |
+| [![](https://img.shields.io/badge/launch-Jupyter-F37626?logo=jupyter&logoColor=white)](https://sdsc-binder.flatironinstitute.org/hub/user-redirect/lab/tree/notebooks/lvm/dr20/lvm_dr20_generate_model_tutorial.ipynb) | **Generate Model Tutorial**: Reconstruct DAP output-model products from the `INFO` extension of a DAP FITS file, by _Sebastian F. Sanchez and the LVM team_ |
+| [![](https://img.shields.io/badge/launch-Jupyter-F37626?logo=jupyter&logoColor=white)](https://sdsc-binder.flatironinstitute.org/hub/user-redirect/lab/tree/notebooks/lvm/dr20/lvm_dr20_read_model_tutorial.ipynb) | **Read Model Tutorial**: Read an LVM DR20 DAP model file and visualise the reconstructed spectral components, by _Sebastian F. Sanchez and the LVM team_ |
+| [![](https://img.shields.io/badge/launch-Jupyter-F37626?logo=jupyter&logoColor=white)](https://sdsc-binder.flatironinstitute.org/hub/user-redirect/lab/tree/notebooks/lvm/dr20/lvm_dr20_read_model_tutorial_documented_v2.ipynb) | **Read Model Tutorial (Detailed)**: A more heavily documented version of the DR20 model-file reading tutorial, by _Sebastian F. Sanchez and the LVM team_ |
 
 ### `spectracles` (spectrospatial modelling)
 
 #### Single emission line tutorial
 | Launch | Notebook |
 |---|---|
-| [![](https://img.shields.io/badge/launch-Jupyter-F37626?logo=jupyter&logoColor=white)](https://sdsc-binder.flatironinstitute.org/~acasey/sdss?urlpath=lab/tree/notebooks/lvm/spectracles_single_line/1_fit_model.ipynb) | **Fit Model**: Fit a spectrospatial model to a single emission line in LVM data, by _Thomas Hilder_ |
-| [![](https://img.shields.io/badge/launch-Jupyter-F37626?logo=jupyter&logoColor=white)](https://sdsc-binder.flatironinstitute.org/~acasey/sdss?urlpath=lab/tree/notebooks/lvm/spectracles_single_line/2_plot_results.ipynb) | **Plot Results**: Visualise the results of the single emission line fit, by _Thomas Hilder_ |
+| [![](https://img.shields.io/badge/launch-Jupyter-F37626?logo=jupyter&logoColor=white)](https://sdsc-binder.flatironinstitute.org/hub/user-redirect/lab/tree/notebooks/lvm/spectracles_single_line/1_fit_model.ipynb) | **Fit Model**: Fit a spectrospatial model to a single emission line in LVM data, by _Thomas Hilder_ |
+| [![](https://img.shields.io/badge/launch-Jupyter-F37626?logo=jupyter&logoColor=white)](https://sdsc-binder.flatironinstitute.org/hub/user-redirect/lab/tree/notebooks/lvm/spectracles_single_line/2_plot_results.ipynb) | **Plot Results**: Visualise the results of the single emission line fit, by _Thomas Hilder_ |
 
 #### W28
 | Launch | Notebook |
 |---|---|
-| [![](https://img.shields.io/badge/launch-Jupyter-F37626?logo=jupyter&logoColor=white)](https://sdsc-binder.flatironinstitute.org/~acasey/sdss?urlpath=lab/tree/notebooks/lvm/spectracles_W28/1_nii.ipynb) | **W28: [N II]**: Spatial-kinematic decomposition of [N II] λ6583 in W28 using spectrospatial models, by _Thomas Hilder_ |
-| [![](https://img.shields.io/badge/launch-Jupyter-F37626?logo=jupyter&logoColor=white)](https://sdsc-binder.flatironinstitute.org/~acasey/sdss?urlpath=lab/tree/notebooks/lvm/spectracles_W28/2_ha.ipynb) | **W28: Hα**: Spatial-kinematic decomposition of Hα in W28 with star masking from [N II] fits, by _Thomas Hilder_ |
-| [![](https://img.shields.io/badge/launch-Jupyter-F37626?logo=jupyter&logoColor=white)](https://sdsc-binder.flatironinstitute.org/~acasey/sdss?urlpath=lab/tree/notebooks/lvm/spectracles_W28/3_oiii.ipynb) | **W28: [O III]**: Spatial-kinematic decomposition of [O III] λ5007 in W28, by _Thomas Hilder_ |
-| [![](https://img.shields.io/badge/launch-Jupyter-F37626?logo=jupyter&logoColor=white)](https://sdsc-binder.flatironinstitute.org/~acasey/sdss?urlpath=lab/tree/notebooks/lvm/spectracles_W28/4_sii.ipynb) | **W28: [S II]**: Spatial-kinematic decomposition of [S II] λ6716 in W28, by _Thomas Hilder_ |
+| [![](https://img.shields.io/badge/launch-Jupyter-F37626?logo=jupyter&logoColor=white)](https://sdsc-binder.flatironinstitute.org/hub/user-redirect/lab/tree/notebooks/lvm/spectracles_W28/1_nii.ipynb) | **W28: [N II]**: Spatial-kinematic decomposition of [N II] λ6583 in W28 using spectrospatial models, by _Thomas Hilder_ |
+| [![](https://img.shields.io/badge/launch-Jupyter-F37626?logo=jupyter&logoColor=white)](https://sdsc-binder.flatironinstitute.org/hub/user-redirect/lab/tree/notebooks/lvm/spectracles_W28/2_ha.ipynb) | **W28: Hα**: Spatial-kinematic decomposition of Hα in W28 with star masking from [N II] fits, by _Thomas Hilder_ |
+| [![](https://img.shields.io/badge/launch-Jupyter-F37626?logo=jupyter&logoColor=white)](https://sdsc-binder.flatironinstitute.org/hub/user-redirect/lab/tree/notebooks/lvm/spectracles_W28/3_oiii.ipynb) | **W28: [O III]**: Spatial-kinematic decomposition of [O III] λ5007 in W28, by _Thomas Hilder_ |
+| [![](https://img.shields.io/badge/launch-Jupyter-F37626?logo=jupyter&logoColor=white)](https://sdsc-binder.flatironinstitute.org/hub/user-redirect/lab/tree/notebooks/lvm/spectracles_W28/4_sii.ipynb) | **W28: [S II]**: Spatial-kinematic decomposition of [S II] λ6716 in W28, by _Thomas Hilder_ |
 
 # Storage
 
