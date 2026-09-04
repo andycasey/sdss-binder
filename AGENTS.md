@@ -15,6 +15,33 @@ kernel instead of guessing at notebook state from the file on disk.
 Related authoring skills from the marimo pack are installed too:
 `marimo-notebook`, `jupyter-to-marimo`, `anywidget`, `wasm-compatibility`.
 
+## Logins persist, everything else in `$HOME` does not
+
+`$HOME` is the image itself and is thrown away when the server stops; `~/home/` is a
+per-user NFS share that survives. `postBuild` installs `~/.binder-persist.sh` and sources
+it from `~/.bashrc`, which points three variables at `~/home/.binder/`:
+
+| Variable | Holds |
+|---|---|
+| `GH_CONFIG_DIR` | `hosts.yml` — the GitHub OAuth token |
+| `CLAUDE_CONFIG_DIR` | `.credentials.json`, `.claude.json`, session history |
+| `GIT_CONFIG_GLOBAL` | git identity and the `gh` credential helper |
+
+So a `gh auth login` or a Claude Code login done today is still there tomorrow. Two
+things follow:
+
+- Only **interactive** shells get those variables, because `~/.bashrc` is where they are
+  set. Anything that runs `gh` or `claude` non-interactively — a cron job, a script
+  invoked by the Jupyter server — must `. ~/.binder-persist.sh` itself first, or it will
+  look at the empty defaults and report that nobody is logged in.
+- If `echo $GH_CONFIG_DIR` is empty in a fresh terminal, the share did not mount. Do not
+  work around it by logging in anyway: that token goes into the image and vanishes with
+  the session.
+
+`~/.claude/skills` and `~/.claude/plugins` stay in the image and are symlinked into
+`$CLAUDE_CONFIG_DIR`, so the marimo skill pack keeps updating with the image instead of
+being frozen at whatever was current the day someone first logged in.
+
 ## Sharing a notebook with the collaboration
 
 If the user writes a notebook — Jupyter or marimo — that other people would plausibly
@@ -69,7 +96,9 @@ gh auth login --hostname github.com --git-protocol https --web
 ```
 
 That prints a one-time code to paste at <https://github.com/login/device> on the user's
-own machine. Then:
+own machine. The login is stored on the persistent share (see below), so this is a
+once-ever step, not a once-per-session one — check `gh auth status` before asking the
+user to go through the device flow again. Then:
 
 ```bash
 gh repo fork andycasey/sdss-binder --clone --remote

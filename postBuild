@@ -126,3 +126,71 @@ fi
 # via shutil.which(), so it must be on PATH at *runtime*. Fail the build now
 # rather than serve a launcher button that dies on click.
 marimo --version
+
+# --- Persistent credentials ----------------------------------------------
+# ${HOME} *is* the image: it is rebuilt from this repo, so everything written
+# to it is discarded when the server stops. A `gh auth login` or a Claude Code
+# login therefore lasts exactly one session, and everyone has to log in again
+# the next day.
+#
+# ${HOME}/home is the exception -- BinderHub mounts a per-user NFS share there,
+# which is why AGENTS.md tells people to keep working copies in it. gh, Claude
+# Code and git each read the location of their config from an environment
+# variable, so pointing all three at that share makes the logins survive a
+# restart.
+#
+# Environment variables rather than symlinking ~/.config/gh and ~/.claude onto
+# the share: these tools rewrite a config file by writing a temp file and
+# renaming it over the target, and rename replaces a *file* symlink with a real
+# file -- persistence would then break silently, mid-session, with no error.
+#
+# None of it can happen at build time (the share is not mounted yet), so
+# install a snippet and source it from ~/.bashrc, which is what a JupyterLab
+# terminal runs.
+cat > "${HOME}/.binder-persist.sh" <<'PERSIST'
+# Keep credentials on the persistent per-user share rather than in the image,
+# so `gh auth login` and the Claude Code login survive a server restart.
+# Installed by postBuild, sourced from ~/.bashrc. Safe to source twice.
+
+_binder_persist="${HOME}/home/.binder"
+
+# ${HOME}/home is a mount point that exists only at runtime, and is not
+# writable if the share failed to mount. Either way, leave the defaults alone
+# rather than quietly saving tokens somewhere that is about to be deleted.
+if [ -d "${HOME}/home" ] &&
+   mkdir -p "${_binder_persist}/gh" "${_binder_persist}/claude" 2>/dev/null; then
+    export GH_CONFIG_DIR="${_binder_persist}/gh"
+    export CLAUDE_CONFIG_DIR="${_binder_persist}/claude"
+    export GIT_CONFIG_GLOBAL="${_binder_persist}/gitconfig"
+
+    # Both tools store their token in the clear, so keep the share private.
+    chmod 700 "${_binder_persist}" "${GH_CONFIG_DIR}" "${CLAUDE_CONFIG_DIR}" 2>/dev/null
+    [ -e "${GIT_CONFIG_GLOBAL}" ] || : > "${GIT_CONFIG_GLOBAL}"
+
+    # The skill pack is installed into the image above, so link it back in
+    # rather than freezing a copy of today's image on the share. Never clobber
+    # a real directory -- someone may have installed their own skills there.
+    for _dir in skills plugins; do
+        _link="${CLAUDE_CONFIG_DIR}/${_dir}"
+        if [ -d "${HOME}/.claude/${_dir}" ] &&
+           { [ -L "${_link}" ] || [ ! -e "${_link}" ]; }; then
+            ln -sfn "${HOME}/.claude/${_dir}" "${_link}"
+        fi
+    done
+    unset _dir _link
+fi
+
+unset _binder_persist
+PERSIST
+
+if ! grep -q 'binder-persist.sh' "${HOME}/.bashrc" 2>/dev/null; then
+    cat >> "${HOME}/.bashrc" <<'BASHRC'
+
+# Keep gh / Claude Code / git credentials on the persistent ~/home share.
+[ -f "${HOME}/.binder-persist.sh" ] && . "${HOME}/.binder-persist.sh"
+BASHRC
+fi
+
+# Fail the build rather than ship a snippet with a syntax error in it, which
+# would print on every terminal anyone opens.
+bash -n "${HOME}/.binder-persist.sh"
