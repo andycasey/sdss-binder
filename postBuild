@@ -63,5 +63,3 @@ fi
 # Fail the build rather than ship an image where Copilot silently cannot start.
 node --version
 npm --version
-
-touch "${HOME}/postBuild.complete"
