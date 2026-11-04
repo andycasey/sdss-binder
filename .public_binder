@@ -8,6 +8,7 @@ mounts:
 mem: 100G
 users:
   - malechaaleck@gmail.com
+  - arodriguez8@gradcenter.cuny.edu
   - alibonkoski@gmail.com
   - amrita2727singh@gmail.com
   - ymamaymamay@gmail.com
